@@ -1,0 +1,219 @@
+📄 CAMERA API Endpoints
+==================================================
+
+GET     /camera/{device_number}/bayeroffsetx
+    Summary: Returns the X offset of the Bayer matrix.
+
+GET     /camera/{device_number}/bayeroffsety
+    Summary: Returns the Y offset of the Bayer matrix.
+
+GET     /camera/{device_number}/binx
+    Summary: Returns the binning factor for the X axis.
+
+PUT     /camera/{device_number}/binx
+    Summary: Sets the binning factor for the X axis.
+
+GET     /camera/{device_number}/biny
+    Summary: Returns the binning factor for the Y axis.
+
+PUT     /camera/{device_number}/biny
+    Summary: Sets the binning factor for the Y axis.
+
+GET     /camera/{device_number}/camerastate
+    Summary: Returns the camera operational state.
+
+GET     /camera/{device_number}/cameraxsize
+    Summary: Returns the width of the CCD camera chip.
+
+GET     /camera/{device_number}/cameraysize
+    Summary: Returns the height of the CCD camera chip.
+
+GET     /camera/{device_number}/canabortexposure
+    Summary: Indicates whether the camera can abort exposures.
+
+GET     /camera/{device_number}/canasymmetricbin
+    Summary: Indicates whether the camera supports asymmetric binning.
+
+GET     /camera/{device_number}/canfastreadout
+    Summary: Indicates whether the camera has a fast readout mode.
+
+GET     /camera/{device_number}/cangetcoolerpower
+    Summary: Indicates whether the camera's cooler power setting can be read.
+
+GET     /camera/{device_number}/canpulseguide
+    Summary: Indicates whether this camera supports pulse guiding.
+
+GET     /camera/{device_number}/cansetccdtemperature
+    Summary: Indicates whether this camera supports setting the CCD temperature.
+
+GET     /camera/{device_number}/canstopexposure
+    Summary: Indicates whether this camera can stop an exposure that is in progress.
+
+GET     /camera/{device_number}/ccdtemperature
+    Summary: Returns the current CCD temperature in degrees Celsius
+
+GET     /camera/{device_number}/cooleron
+    Summary: Returns the current cooler on/off state.
+
+PUT     /camera/{device_number}/cooleron
+    Summary: Turns the camera cooler on and off
+
+GET     /camera/{device_number}/coolerpower
+    Summary: Returns the present cooler power level
+
+GET     /camera/{device_number}/electronsperadu
+    Summary: Returns the gain of the camera in photoelectrons per A/D unit.
+
+GET     /camera/{device_number}/exposuremax
+    Summary: Returns the maximum exposure time supported by StartExposure.
+
+GET     /camera/{device_number}/exposuremin
+    Summary: Returns the Minimium exposure time supported by StartExposure.
+
+GET     /camera/{device_number}/exposureresolution
+    Summary: Returns the smallest increment in exposure time supported by StartExposure.
+
+GET     /camera/{device_number}/fastreadout
+    Summary: Returns whenther Fast Readout Mode is enabled.
+
+PUT     /camera/{device_number}/fastreadout
+    Summary: Sets whether Fast Readout Mode is enabled.
+
+GET     /camera/{device_number}/fullwellcapacity
+    Summary: Reports the full well capacity of the camera in electrons, at the current camera settings.
+
+GET     /camera/{device_number}/gain
+    Summary: Returns the camera's gain (GAIN VALUE MODE) OR the index of the selected camera gain description in the Gains array (GAINS INDEX MODE).
+
+PUT     /camera/{device_number}/gain
+    Summary: Sets the camera's gain (GAIN VALUE MODE) OR the index of the selected camera gain description in the Gains array (GAINS INDEX MODE).
+
+GET     /camera/{device_number}/gainmax
+    Summary: Maximum Gain value of that this camera supports
+
+GET     /camera/{device_number}/gainmin
+    Summary: Minimum Gain value of that this camera supports
+
+GET     /camera/{device_number}/gains
+    Summary: List of Gain names supported by the camera
+
+GET     /camera/{device_number}/hasshutter
+    Summary: Indicates whether the camera has a mechanical shutter
+
+GET     /camera/{device_number}/heatsinktemperature
+    Summary: Returns the current heat sink temperature in degrees Celsius.
+
+GET     /camera/{device_number}/imagearray
+    Summary: Returns an array of integers containing the exposure pixel values
+
+GET     /camera/{device_number}/imagearrayvariant
+    Summary: Returns an array of numbers containing the exposure pixel values
+
+GET     /camera/{device_number}/imageready
+    Summary: Indicates that an image is ready to be downloaded
+
+GET     /camera/{device_number}/ispulseguiding
+    Summary: Indicates that the camera is pulse guideing.
+
+GET     /camera/{device_number}/lastexposureduration
+    Summary: Duration of the last exposure (seconds)
+
+GET     /camera/{device_number}/lastexposurestarttime
+    Summary: Start time of the last exposure in FITS standard format CCYY-MM-DDThh:mm:ss[.sss...]. The time must be UTC.
+
+GET     /camera/{device_number}/maxadu
+    Summary: Camera's maximum ADU value
+
+GET     /camera/{device_number}/maxbinx
+    Summary: Maximum binning for the camera X axis
+
+GET     /camera/{device_number}/maxbiny
+    Summary: Maximum binning for the camera Y axis
+
+GET     /camera/{device_number}/numx
+    Summary: Returns the current subframe width in binned pixels.
+
+PUT     /camera/{device_number}/numx
+    Summary: Sets the current subframe width in binned pixels.
+
+GET     /camera/{device_number}/numy
+    Summary: Returns the current subframe height in binned pixels.
+
+PUT     /camera/{device_number}/numy
+    Summary: Sets the current subframe height in binned pixels.
+
+GET     /camera/{device_number}/offset
+    Summary: Returns the camera's offset (OFFSET VALUE MODE) OR the index of the selected camera offset description in the offsets array (OFFSETS INDEX MODE).
+
+PUT     /camera/{device_number}/offset
+    Summary: Sets the camera's offset (OFFSET VALUE MODE) OR the index of the selected camera offset description in the offsets array (OFFSETS INDEX MODE).
+
+GET     /camera/{device_number}/offsetmax
+    Summary: Maximum offset value of that this camera supports
+
+GET     /camera/{device_number}/offsetmin
+    Summary: Minimum offset value of that this camera supports
+
+GET     /camera/{device_number}/offsets
+    Summary: List of offset names supported by the camera
+
+GET     /camera/{device_number}/percentcompleted
+    Summary: Indicates percentage completeness of the current operation
+
+GET     /camera/{device_number}/pixelsizex
+    Summary: Width of CCD chip pixels (microns)
+
+GET     /camera/{device_number}/pixelsizey
+    Summary: Height of CCD chip pixels (microns)
+
+GET     /camera/{device_number}/readoutmode
+    Summary: Indicates the canera's readout mode as an index into the array ReadoutModes
+
+PUT     /camera/{device_number}/readoutmode
+    Summary: Set the camera's readout mode
+
+GET     /camera/{device_number}/readoutmodes
+    Summary: Returns a string list of available readout modes
+
+GET     /camera/{device_number}/sensorname
+    Summary: Returns the camera's sensor name
+
+GET     /camera/{device_number}/sensortype
+    Summary: Returns a value indicating whether the sensor is monochrome, or what Bayer matrix it encodes.
+
+GET     /camera/{device_number}/setccdtemperature
+    Summary: Returns the current camera cooler setpoint in degrees Celsius.
+
+PUT     /camera/{device_number}/setccdtemperature
+    Summary: Set the camera's cooler setpoint (degrees Celsius).
+
+GET     /camera/{device_number}/startx
+    Summary: Returns the current subframe X axis start position in binned pixels
+
+PUT     /camera/{device_number}/startx
+    Summary: Sets the current subframe X axis start position in binned pixels
+
+GET     /camera/{device_number}/starty
+    Summary: Returns the current subframe Y axis start position in binned pixels
+
+PUT     /camera/{device_number}/starty
+    Summary: Sets the current subframe Y axis start position in bined pixels
+
+GET     /camera/{device_number}/subexposureduration
+    Summary: Camera's sub-exposure interval
+
+PUT     /camera/{device_number}/subexposureduration
+    Summary: Sets the current Sub Exposure Duration
+
+PUT     /camera/{device_number}/abortexposure
+    Summary: Aborts the current exposure and returns the camera to Idle state.
+
+PUT     /camera/{device_number}/pulseguide
+    Summary: Pulse guide in the specified direction for the specified time.
+
+PUT     /camera/{device_number}/startexposure
+    Summary: Starts an exposure
+
+PUT     /camera/{device_number}/stopexposure
+    Summary: Stops the current exposure
+

@@ -1,0 +1,248 @@
+# Configuration for simulated Alpaca devices
+devices:
+  camera:
+    0:
+      name: "Simulator Camera"
+      description: "ASCOM Camera Simulator"
+      driverinfo: "Camera Simulator v1.0"
+      driverversion: "1.0.0"
+      interfaceversion: 3
+      # Camera specific properties
+      cameraxsize: 2048
+      cameraysize: 2048
+      canabortexposure: true
+      canasymmetricbin: true
+      canfastreadout: false
+      cangetcoolerpower: true
+      canpulseguide: true
+      cansetccdtemperature: true
+      canstopexposure: true
+      ccdtemperature: -20.0
+      setccdtemperature: -20.0
+      cooleron: false
+      coolerpower: 0.0
+      electronsperadu: 1.5
+      exposuremax: 3600.0
+      exposuremin: 0.001
+      exposureresolution: 0.001
+      fastreadout: false
+      fullwellcapacity: 50000
+      gain: 1
+      gainmax: 10
+      gainmin: 1
+      gains: ["High", "Medium", "Low"]
+      hasshutter: true
+      heatsinktemperature: 25.0
+      maxadu: 65535
+      maxbinx: 8
+      maxbiny: 8
+      percentcompleted: 0
+      pixelsizex: 10
+      pixelsizey: 10
+      readoutmode: 0
+      readoutmodes: ["Fast", "Normal", "High Quality"]
+      sensorname: "Sony ICX694"
+      sensortype: 1  # Monochrome
+      offset: 100
+      offsetmax: 1000
+      offsetmin: 0
+      offsets: ["Low", "Medium", "High"]
+      subexposureduration: 0.0
+      bayeroffsetx: 0
+      bayeroffsety: 0
+      binx: 1
+      biny: 1
+      numx: 1024
+      numy: 1024
+      startx: 0
+      starty: 0
+
+  telescope:
+    0:
+      name: "Simulator Telescope"
+      description: "ASCOM Telescope Simulator"
+      driverinfo: "Telescope Simulator v1.0"
+      driverversion: "1.0.0"
+      interfaceversion: 3
+      # Telescope specific properties
+      alignmentmode: 1  # German Polar
+      aperturearea: 0.785
+      aperturediameter: 1.0
+      athome: false
+      atpark: false
+      canfindhome: true
+      canpark: true
+      canpulseguide: true
+      cansetdeclinationrate: true
+      cansetguiderates: true
+      cansetpark: true
+      cansetpierside: false
+      cansetrightascensionrate: true
+      cansettracking: true
+      canslew: true
+      canslewaltaz: true
+      canslewaltazasync: true
+      canslewasync: true
+      cansync: true
+      cansyncaltaz: true
+      canunpark: true
+      declination: 0.0
+      declinationrate: 0.0
+      doesrefraction: true
+      equatorialsystem: 0  # J2000
+      focallength: 8.0
+      guideratedeclination: 0.0
+      guideraterightascension: 0.0
+      ispulseguiding: false
+      rightascension: 0.0
+      rightascensionrate: 0.0
+      sideofpier: 0  # Unknown
+      siderealtime: 0.0
+      siteelevation: 1000.0
+      sitelatitude: 45.0
+      sitelongitude: -122.0
+      slewing: false
+      slewsettletime: 0.0
+      targetdeclination: 0.0
+      targetrightascension: 0.0
+      tracking: false
+      trackingrate: 0  # Sidereal
+
+  dome:
+    0:
+      name: "Simulator Dome"
+      description: "ASCOM Dome Simulator"
+      driverinfo: "Dome Simulator v1.0"
+      driverversion: "1.0.0"
+      interfaceversion: 2
+      altitude: 45.0
+      athome: false
+      atpark: false
+      azimuth: 0.0
+      canfindhome: true
+      canpark: true
+      cansetaltitude: true
+      cansetazimuth: true
+      cansetpark: true
+      cansetshutter: true
+      canslave: true
+      cansyncazimuth: true
+      shutterstatus: 2  # Closed
+      slaved: false
+      slewing: false
+
+  focuser:
+    0:
+      name: "Simulator Focuser"
+      description: "ASCOM Focuser Simulator"
+      driverinfo: "Focuser Simulator v1.0"
+      driverversion: "1.0.0"
+      interfaceversion: 3
+      absolute: true
+      ismoving: false
+      maxincrement: 1000
+      maxstep: 100000
+      position: 10000
+      stepsize: 1.0
+      tempcomp: false
+      tempcompavailable: true
+      temperature: 20.0
+
+  filterwheel:
+    0:
+      name: "Simulator Filter Wheel"
+      description: "ASCOM Filter Wheel Simulator"
+      driverinfo: "Filter Wheel Simulator v1.0"
+      driverversion: "1.0.0"
+      interfaceversion: 2
+      focusoffsets: [-100, -100, 50, 0, 100]
+      names: ["Red", "Green", "Blue", "Clear", "Luminance"]
+      position: 0
+
+  rotator:
+    0:
+      name: "Simulator Rotator"
+      description: "ASCOM Rotator Simulator"
+      driverinfo: "Rotator Simulator v1.0"
+      driverversion: "1.0.0"
+      interfaceversion: 2
+      canreverse: true
+      ismoving: false
+      mechanicalposition: 0.0
+      position: 0.0
+      reverse: false
+      stepsize: 0.1
+      targetposition: 0.0
+
+  safetymonitor:
+    0:
+      name: "Simulator Safety Monitor"
+      description: "ASCOM Safety Monitor Simulator"
+      driverinfo: "Safety Monitor Simulator v1.0"
+      driverversion: "1.0.0"
+      interfaceversion: 2
+      issafe: true
+
+  switch:
+    0:
+      name: "Simulator Switch"
+      description: "ASCOM Switch Simulator"
+      driverinfo: "Switch Simulator v1.0"
+      driverversion: "1.0.0"
+      interfaceversion: 2
+      maxswitch: 8
+      switches:
+        0:
+          name: "Power Switch 1"
+          description: "Main power switch"
+          canwrite: true
+          canasync: false
+          value: false
+          minimum: 0.0
+          maximum: 1.0
+          step: 1.0
+        1:
+          name: "Dimmer 1"
+          description: "Variable brightness control"
+          canwrite: true
+          canasync: false
+          value: 0.5
+          minimum: 0.0
+          maximum: 1.0
+          step: 0.1
+
+  observingconditions:
+    0:
+      name: "Simulator Observing Conditions"
+      description: "ASCOM Observing Conditions Simulator"
+      driverinfo: "Observing Conditions Simulator v1.0"
+      driverversion: "1.0.0"
+      interfaceversion: 1
+      averageperiod: 60.0
+      cloudcover: 0.2
+      dewpoint: 5.0
+      humidity: 60.0
+      pressure: 1013.25
+      rainrate: 0.0
+      skybrightness: 18.5
+      skyquality: 20.0
+      skytemperature: -40.0
+      starfwhm: 2.5
+      temperature: 15.0
+      winddirection: 180.0
+      windgust: 5.0
+      windspeed: 3.0
+
+  covercalibrator:
+    0:
+      name: "Simulator Cover Calibrator"
+      description: "ASCOM Cover Calibrator Simulator"
+      driverinfo: "Cover Calibrator Simulator v1.0"
+      driverversion: "1.0.0"
+      interfaceversion: 1
+      brightness: 0
+      calibratorchanging: false
+      calibratorstate: 0  # NotPresent
+      covermoving: false
+      coverstate: 1  # Closed
+      maxbrightness: 255

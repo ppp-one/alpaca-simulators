@@ -1,0 +1,42 @@
+📄 ROTATOR API Endpoints
+==================================================
+
+GET     /rotator/{device_number}/canreverse
+    Summary: True if the Rotator supports the Reverse method.
+
+GET     /rotator/{device_number}/ismoving
+    Summary: Returns True if the rotator is currently moving to a new position.
+
+GET     /rotator/{device_number}/mechanicalposition
+    Summary: Returns the rotator's mechanical current position (degrees).
+
+GET     /rotator/{device_number}/position
+    Summary: Returns the rotator's current position (degrees).
+
+GET     /rotator/{device_number}/reverse
+    Summary: Returns the rotatorâ€™s Reverse state.
+
+PUT     /rotator/{device_number}/reverse
+    Summary: Sets the rotatorâ€™s Reverse state.
+
+GET     /rotator/{device_number}/stepsize
+    Summary: Returns the minimum StepSize (degrees).
+
+GET     /rotator/{device_number}/targetposition
+    Summary: Returns the destination position angle (degrees).
+
+PUT     /rotator/{device_number}/halt
+    Summary: Immediatley stops rotator motion.
+
+PUT     /rotator/{device_number}/move
+    Summary: Moves the rotator to a new position relative to the current position.
+
+PUT     /rotator/{device_number}/moveabsolute
+    Summary: Moves the rotator to a new absolute position (degrees).
+
+PUT     /rotator/{device_number}/movemechanical
+    Summary: Moves the rotator to a new raw mechanical position (degrees).
+
+PUT     /rotator/{device_number}/sync
+    Summary: Syncs the rotator to the specified position angle without moving it.
+

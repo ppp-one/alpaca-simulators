@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Control Interface v2</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --text-color: #e0e0e0;
+            --primary-color: #007bff;
+            --primary-hover: #0056b3;
+            --secondary-color: #4a4a4a;
+            --border-color: #333;
+            --success-color: #28a745;
+            --error-color: #dc3545;
+            --card-bg: #242424;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 2rem;
+            font-size: 14px;
+        }
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 2rem;
+        }
+        .accordion {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            background-color: var(--card-bg);
+        }
+        .accordion-header {
+            background-color: var(--secondary-color);
+            padding: 1rem;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .accordion-header::after { content: '▼'; transition: transform 0.2s ease-in-out; }
+        .accordion.open .accordion-header::after { transform: rotate(180deg); }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+            padding: 0 1rem;
+        }
+        .endpoint-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1rem;
+            padding: 1rem 0;
+        }
+        .endpoint-card {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1rem;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .endpoint-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: var(--primary-color);
+            word-break: break-all;
+        }
+        .endpoint-type {
+            font-style: italic;
+            color: #aaa;
+            background-color: var(--secondary-color);
+            padding: 2px 6px;
+            border-radius: 4px;
+            align-self: flex-start;
+        }
+        .controls { display: flex; flex-direction: column; gap: 0.75rem; }
+        .control-group { display: flex; gap: 0.5rem; align-items: center; }
+        .control-group input, .control-group textarea {
+            flex-grow: 1;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            font-family: "Fira Code", monospace;
+        }
+        .control-group input[type="checkbox"] { flex-grow: 0; width: 18px; height: 18px; }
+        .put-params-container { display: flex; flex-direction: column; gap: 0.5rem; }
+        .param-group { display: flex; align-items: center; gap: 0.5rem; }
+        .param-group label { min-width: 100px; text-align: right; font-size: 0.9em; }
+        .param-group input { width: 100%; }
+        
+        button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .btn-get { background-color: var(--primary-color); }
+        .btn-get:hover { background-color: var(--primary-hover); }
+        .btn-put { background-color: var(--success-color); margin-top: 0.5rem; }
+        .btn-put:hover { background-color: #218838; }
+        
+        .response-box {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background-color: #111;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            min-height: 2em;
+            font-family: "Fira Code", monospace;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #ccc;
+        }
+        .response-box.error { color: var(--error-color); }
+        .response-box.success { color: var(--success-color); }
+    </style>
+</head>
+<body>
+
+    <h1>Alpaca API Control Interface</h1>
+    <div id="ui-container"></div>
+
+    <script>
+        // Jinja2 injects the JSON object here
+        const endpoints = {{ endpoints | tojson | safe }};
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('ui-container');
+
+            for (const device in endpoints) {
+                // Ignore the generic template key
+                if (device === '{device_type}') continue;
+
+                const deviceData = endpoints[device];
+                const allProps = new Set([...deviceData.GET, ...deviceData.PUT]);
+
+                const accordion = document.createElement('div');
+                accordion.className = 'accordion';
+
+                const header = document.createElement('div');
+                header.className = 'accordion-header';
+                header.textContent = device.charAt(0).toUpperCase() + device.slice(1);
+                header.onclick = () => {
+                    accordion.classList.toggle('open');
+                    const content = accordion.querySelector('.accordion-content');
+                    if (accordion.classList.contains('open')) {
+                        content.style.maxHeight = content.scrollHeight + "px";
+                    } else {
+                        content.style.maxHeight = '0';
+                    }
+                };
+
+                const content = document.createElement('div');
+                content.className = 'accordion-content';
+                const grid = document.createElement('div');
+                grid.className = 'endpoint-grid';
+
+                allProps.forEach(prop => {
+                    const card = createEndpointCard(device, prop, deviceData);
+                    grid.appendChild(card);
+                });
+
+                content.appendChild(grid);
+                accordion.appendChild(header);
+                accordion.appendChild(content);
+                container.appendChild(accordion);
+            }
+        });
+
+        function createEndpointCard(device, prop, deviceData) {
+            const propInfo = deviceData.info[prop];
+            const isGet = deviceData.GET.includes(prop);
+            const isPut = deviceData.PUT.includes(prop);
+
+            let displayType = 'unknown';
+            if (propInfo) {
+                displayType = Array.isArray(propInfo) ? 'action' : propInfo.type;
+            }
+            
+            const card = document.createElement('div');
+            card.className = 'endpoint-card';
+            card.id = `card-${device}-${prop}`;
+
+            const title = document.createElement('div');
+            title.className = 'endpoint-title';
+            title.textContent = prop;
+
+            const typeLabel = document.createElement('span');
+            typeLabel.className = 'endpoint-type';
+            typeLabel.textContent = displayType;
+
+            const controls = document.createElement('div');
+            controls.className = 'controls';
+
+            const responseBox = document.createElement('pre');
+            responseBox.className = 'response-box';
+            responseBox.textContent = 'Awaiting interaction...';
+
+            if (isGet) {
+                const getGroup = document.createElement('div');
+                getGroup.className = 'control-group';
+                const getButton = document.createElement('button');
+                getButton.textContent = 'Get';
+                getButton.className = 'btn-get';
+                getButton.onclick = () => handleRequest(device, prop, 'GET', null, responseBox);
+                getGroup.appendChild(getButton);
+                controls.appendChild(getGroup);
+            }
+
+            if (isPut && propInfo) {
+                const params = Array.isArray(propInfo) ? propInfo : [propInfo];
+                const putContainer = document.createElement('div');
+                putContainer.className = 'put-params-container';
+
+                params.forEach(param => {
+                    if (param.type === 'BackgroundTasks') return; // Skip special types
+
+                    const paramGroup = document.createElement('div');
+                    paramGroup.className = 'param-group';
+
+                    const label = document.createElement('label');
+                    label.textContent = param.name;
+                    paramGroup.appendChild(label);
+                    
+                    let input;
+                    switch (param.type) {
+                        case 'bool':
+                            input = document.createElement('input');
+                            input.type = 'checkbox';
+                            break;
+                        case 'int':
+                        case 'float':
+                            input = document.createElement('input');
+                            input.type = 'number';
+                            if (param.type === 'float') input.step = 'any';
+                            input.placeholder = param.name;
+                            break;
+                        default: // str and others
+                            input = document.createElement('input');
+                            input.type = 'text';
+                            input.placeholder = param.name;
+                    }
+                    input.dataset.paramName = param.name;
+                    paramGroup.appendChild(input);
+                    putContainer.appendChild(paramGroup);
+                });
+
+                const putButton = document.createElement('button');
+                putButton.textContent = 'Trigger / Set';
+                putButton.className = 'btn-put';
+                putButton.onclick = () => handleRequest(device, prop, 'PUT', putContainer, responseBox);
+                
+                controls.appendChild(putContainer);
+                controls.appendChild(putButton);
+            }
+            
+            card.appendChild(title);
+            card.appendChild(typeLabel);
+            card.appendChild(controls);
+            card.appendChild(responseBox);
+            return card;
+        }
+
+        async function handleRequest(device, property, method, inputsContainer, responseBox) {
+            const url = `/api/v1/${device}/0/${property.toLowerCase()}`;
+            responseBox.textContent = `[${method}] ${url}\nSending request...`;
+            responseBox.className = 'response-box';
+
+            try {
+                const options = { method: method };
+
+                if (method === 'PUT' && inputsContainer) {
+                    const formData = new URLSearchParams();
+                    const inputs = inputsContainer.querySelectorAll('input');
+                    
+                    inputs.forEach(input => {
+                        const name = input.dataset.paramName;
+                        const value = (input.type === 'checkbox') ? input.checked : input.value;
+                        if (name) {
+                           formData.append(name, value);
+                        }
+                    });
+                    
+                    options.body = formData;
+                    // Note: 'Content-Type' is set automatically by fetch for URLSearchParams
+                }
+
+                const response = await fetch(url, options);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.ErrorMessage || `HTTP error! status: ${response.status}`);
+                }
+                
+                responseBox.textContent = `Status: ${response.status} OK\n\n${JSON.stringify(data, null, 2)}`;
+                responseBox.classList.add('success');
+
+            } catch (error) {
+                responseBox.textContent = `Error: ${error.message}`;
+                responseBox.classList.add('error');
+            }
+        }
+    </script>
+</body>
+</html>

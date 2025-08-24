@@ -1,0 +1,6 @@
+📄 SAFETYMONITOR API Endpoints
+==================================================
+
+GET     /safetymonitor/{device_number}/issafe
+    Summary: Indicates whether the monitored state is safe for use.
+

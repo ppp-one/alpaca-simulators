@@ -1,0 +1,243 @@
+📄 TELESCOPE API Endpoints
+==================================================
+
+GET     /telescope/{device_number}/alignmentmode
+    Summary: Returns the current mount alignment mode
+
+GET     /telescope/{device_number}/altitude
+    Summary: Returns the mount's altitude above the horizon (degrees).
+
+GET     /telescope/{device_number}/aperturearea
+    Summary: Returns the telescope's aperture (square meters).
+
+GET     /telescope/{device_number}/aperturediameter
+    Summary: Returns the telescope's effective aperture (meters).
+
+GET     /telescope/{device_number}/athome
+    Summary: Indicates whether the mount is at the home position.
+
+GET     /telescope/{device_number}/atpark
+    Summary: Indicates whether the telescope is at the park position.
+
+GET     /telescope/{device_number}/azimuth
+    Summary: Returns the mount's azimuth (degrees, North-referenced, positive East/clockwise).
+
+GET     /telescope/{device_number}/canfindhome
+    Summary: Indicates whether the mount can find the home position.
+
+GET     /telescope/{device_number}/canpark
+    Summary: Indicates whether the telescope can be parked.
+
+GET     /telescope/{device_number}/canpulseguide
+    Summary: Indicates whether the telescope can be pulse guided.
+
+GET     /telescope/{device_number}/cansetdeclinationrate
+    Summary: Indicates whether the DeclinationRate property can be changed.
+
+GET     /telescope/{device_number}/cansetguiderates
+    Summary: Indicates whether the GuideRate property can be changed.
+
+GET     /telescope/{device_number}/cansetpark
+    Summary: Indicates whether the telescope park position can be set.
+
+GET     /telescope/{device_number}/cansetpierside
+    Summary: Indicates whether the telescope SideOfPier can be set.
+
+GET     /telescope/{device_number}/cansetrightascensionrate
+    Summary: Indicates whether the RightAscensionRate can be changed.
+
+GET     /telescope/{device_number}/cansettracking
+    Summary: Indicates whether the Tracking state can be changed.
+
+GET     /telescope/{device_number}/canslew
+    Summary: Indicates whether the telescope can slew synchronously.
+
+GET     /telescope/{device_number}/canslewaltaz
+    Summary: Indicates whether the telescope can slew synchronously to AltAz coordinates.
+
+GET     /telescope/{device_number}/canslewaltazasync
+    Summary: Indicates whether the telescope can slew asynchronously to AltAz coordinates.
+
+GET     /telescope/{device_number}/canslewasync
+    Summary: Indicates whether the telescope can slew asynchronously to equatorial coordinates.
+
+GET     /telescope/{device_number}/cansync
+    Summary: Indicates whether the telescope can sync to equatorial coordinates.
+
+GET     /telescope/{device_number}/cansyncaltaz
+    Summary: Indicates whether the telescope can sync to Alt/Az coordinates.
+
+GET     /telescope/{device_number}/canunpark
+    Summary: Indicates whether the telescope can be unparked.
+
+GET     /telescope/{device_number}/declination
+    Summary: Returns the mount's declination (degrees).
+
+GET     /telescope/{device_number}/declinationrate
+    Summary: Returns the telescope's declination tracking rate (arcseconds per SI second).
+
+PUT     /telescope/{device_number}/declinationrate
+    Summary: Sets the telescope's declination tracking rate (arcseconds per SI second).
+
+GET     /telescope/{device_number}/doesrefraction
+    Summary: Indicates whether atmospheric refraction correction is applied to coordinates.
+
+PUT     /telescope/{device_number}/doesrefraction
+    Summary: Determines whether atmospheric refraction correction is applied to coordinates.
+
+GET     /telescope/{device_number}/equatorialsystem
+    Summary: Returns the current equatorial coordinate system used by this telescope.
+
+GET     /telescope/{device_number}/focallength
+    Summary: Returns the telescope's focal length (meters).
+
+GET     /telescope/{device_number}/guideratedeclination
+    Summary: Returns the  current Declination rate offset for telescope guiding (degrees/sec).
+
+PUT     /telescope/{device_number}/guideratedeclination
+    Summary: Sets the  current Declination rate offset for telescope guiding (degrees/sec).
+
+GET     /telescope/{device_number}/guideraterightascension
+    Summary: Returns the  current RightAscension rate offset for telescope guiding (degrees/sec).
+
+PUT     /telescope/{device_number}/guideraterightascension
+    Summary: Sets the  current RightAscension rate offset for telescope guiding (degrees/sec).
+
+GET     /telescope/{device_number}/ispulseguiding
+    Summary: Indicates whether the telescope is currently executing a PulseGuide command
+
+GET     /telescope/{device_number}/rightascension
+    Summary: Returns the mount's right ascension coordinate (hours).
+
+GET     /telescope/{device_number}/rightascensionrate
+    Summary: Returns the telescope's right ascension tracking rate (arcseconds per sidereal second).
+
+PUT     /telescope/{device_number}/rightascensionrate
+    Summary: Sets the telescope's right ascension tracking rate (arcseconds per sidereal second).
+
+GET     /telescope/{device_number}/sideofpier
+    Summary: Returns the mount's pointing state.
+
+PUT     /telescope/{device_number}/sideofpier
+    Summary: Sets the mount's pointing state.
+
+GET     /telescope/{device_number}/siderealtime
+    Summary: Returns the local apparent sidereal time.
+
+GET     /telescope/{device_number}/siteelevation
+    Summary: Returns the observing site's elevation above mean sea level (metres).
+
+PUT     /telescope/{device_number}/siteelevation
+    Summary: Sets the observing site's elevation above mean sea level (metres).
+
+GET     /telescope/{device_number}/sitelatitude
+    Summary: Returns the observing site's latitude (degrees).
+
+PUT     /telescope/{device_number}/sitelatitude
+    Summary: Sets the observing site's latitude.
+
+GET     /telescope/{device_number}/sitelongitude
+    Summary: Returns the observing site's longitude (degrees, positive East, WGS84).
+
+PUT     /telescope/{device_number}/sitelongitude
+    Summary: Sets the observing site's longitude.
+
+GET     /telescope/{device_number}/slewing
+    Summary: Indicates whether the telescope is currently slewing.
+
+GET     /telescope/{device_number}/slewsettletime
+    Summary: Returns the post-slew settling time.
+
+PUT     /telescope/{device_number}/slewsettletime
+    Summary: Sets the post-slew settling time (seconds).
+
+GET     /telescope/{device_number}/targetdeclination
+    Summary: Returns the current target declination (degrees, positive North).
+
+PUT     /telescope/{device_number}/targetdeclination
+    Summary: Sets the target declination of a slew or sync (degrees, positive North)
+
+GET     /telescope/{device_number}/targetrightascension
+    Summary: Returns the current target right ascension (hours).
+
+PUT     /telescope/{device_number}/targetrightascension
+    Summary: Sets the target right ascension of a slew or sync (hours).
+
+GET     /telescope/{device_number}/tracking
+    Summary: Indicates whether the telescope is tracking.
+
+PUT     /telescope/{device_number}/tracking
+    Summary: Enables or disables telescope tracking.
+
+GET     /telescope/{device_number}/trackingrate
+    Summary: Returns the current tracking rate.
+
+PUT     /telescope/{device_number}/trackingrate
+    Summary: Sets the mount's tracking rate.
+
+GET     /telescope/{device_number}/trackingrates
+    Summary: Returns a collection of supported DriveRates values.
+
+GET     /telescope/{device_number}/utcdate
+    Summary: Returns the UTC date/time of the telescope's internal clock as a string.
+
+PUT     /telescope/{device_number}/utcdate
+    Summary: Sets the UTC date/time of the telescope's internal clock.
+
+PUT     /telescope/{device_number}/abortslew
+    Summary: Immediatley stops a slew in progress.
+
+GET     /telescope/{device_number}/axisrates
+    Summary: Returns the rates at which the telescope may be moved about the specified axis (degrees / second).
+
+GET     /telescope/{device_number}/canmoveaxis
+    Summary: Indicates whether the telescope can move the requested axis.
+
+GET     /telescope/{device_number}/destinationsideofpier
+    Summary: Predicts the pointing state after a German equatorial mount slews to given coordinates.
+
+PUT     /telescope/{device_number}/findhome
+    Summary: Moves the mount to its "home" position.
+
+PUT     /telescope/{device_number}/moveaxis
+    Summary: Moves a telescope axis at the given rate (degrees / second).
+
+PUT     /telescope/{device_number}/park
+    Summary: Parks the mount
+
+PUT     /telescope/{device_number}/pulseguide
+    Summary: Moves the scope in the given direction for the given time.
+
+PUT     /telescope/{device_number}/setpark
+    Summary: Sets the current position as the telescope's park position.
+
+PUT     /telescope/{device_number}/slewtoaltaz
+    Summary: Synchronously slew to the given Alt/Az coordinates.
+
+PUT     /telescope/{device_number}/slewtoaltazasync
+    Summary: Asynchronously slew to the given Alt/Az coordinates.
+
+PUT     /telescope/{device_number}/slewtocoordinates
+    Summary: Synchronously slew to the given equatorial coordinates.
+
+PUT     /telescope/{device_number}/slewtocoordinatesasync
+    Summary: Asynchronously slew to the given equatorial coordinates.
+
+PUT     /telescope/{device_number}/slewtotarget
+    Summary: Synchronously slew to the TargetRightAscension and TargetDeclination coordinates.
+
+PUT     /telescope/{device_number}/slewtotargetasync
+    Summary: Asynchronously slew to the TargetRightAscension and TargetDeclination coordinates.
+
+PUT     /telescope/{device_number}/synctoaltaz
+    Summary: Sync to the given Alt/Az coordinates.
+
+PUT     /telescope/{device_number}/synctocoordinates
+    Summary: Syncs to the given equatorial coordinates.
+
+PUT     /telescope/{device_number}/synctotarget
+    Summary: Syncs to the TargetRightAscension and TargetDeclination coordinates.
+
+PUT     /telescope/{device_number}/unpark
+    Summary: Unparks the mount.
+

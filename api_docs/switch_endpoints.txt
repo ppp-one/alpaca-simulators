@@ -1,0 +1,51 @@
+📄 SWITCH API Endpoints
+==================================================
+
+GET     /switch/{device_number}/maxswitch
+    Summary: The number of switch devices managed by this driver
+
+GET     /switch/{device_number}/canasync
+    Summary: Returns a Flag indicating whether the specified switch can operate asynchronously.
+
+GET     /switch/{device_number}/canwrite
+    Summary: Indicates whether the specified switch device can be written to
+
+GET     /switch/{device_number}/getswitch
+    Summary: Return the state of the specified switch device as a boolean
+
+GET     /switch/{device_number}/getswitchdescription
+    Summary: Returns the description of the specified switch device
+
+GET     /switch/{device_number}/getswitchname
+    Summary: Returns the name of the specified switch device
+
+GET     /switch/{device_number}/getswitchvalue
+    Summary: Returns the value of the specified switch device as a double
+
+GET     /switch/{device_number}/minswitchvalue
+    Summary: Returns the minimum value of the specified switch device as a double
+
+GET     /switch/{device_number}/maxswitchvalue
+    Summary: Gets the maximum value of the specified switch device as a double
+
+PUT     /switch/{device_number}/setasync
+    Summary: Sets a switch's boolean state asynchronously
+
+PUT     /switch/{device_number}/setasyncvalue
+    Summary: Set a switch's double value asynchronously
+
+PUT     /switch/{device_number}/setswitch
+    Summary: Sets a switch device to the specified boolean state
+
+PUT     /switch/{device_number}/setswitchname
+    Summary: Sets a switch device name to the specified value
+
+PUT     /switch/{device_number}/setswitchvalue
+    Summary: Sets a switch device to the specified double value
+
+GET     /switch/{device_number}/statechangecomplete
+    Summary: Completion variable for asynchronous switch state change operations.
+
+GET     /switch/{device_number}/switchstep
+    Summary: Returns the step size that this device supports.
+

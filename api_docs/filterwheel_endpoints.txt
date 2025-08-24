@@ -1,0 +1,15 @@
+📄 FILTERWHEEL API Endpoints
+==================================================
+
+GET     /filterwheel/{device_number}/focusoffsets
+    Summary: Returns an integer array of filter focus offsets
+
+GET     /filterwheel/{device_number}/names
+    Summary: Filter wheel filter names
+
+GET     /filterwheel/{device_number}/position
+    Summary: Returns the current filter wheel position
+
+PUT     /filterwheel/{device_number}/position
+    Summary: Sets the filter wheel position
+

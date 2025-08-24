@@ -1,0 +1,36 @@
+📄 COVERCALIBRATOR API Endpoints
+==================================================
+
+GET     /covercalibrator/{device_number}/brightness
+    Summary: Returns the current calibrator brightness
+
+GET     /covercalibrator/{device_number}/calibratorchanging
+    Summary: Completion variable for calibrator brightness changes.
+
+GET     /covercalibrator/{device_number}/calibratorstate
+    Summary: Returns the state of the calibration device
+
+GET     /covercalibrator/{device_number}/covermoving
+    Summary: Completion variable for cover open and close operations.
+
+GET     /covercalibrator/{device_number}/coverstate
+    Summary: Returns the state of the device cover"
+
+GET     /covercalibrator/{device_number}/maxbrightness
+    Summary: Returns the calibrator's maximum Brightness value.
+
+PUT     /covercalibrator/{device_number}/calibratoroff
+    Summary: Turns the calibrator off
+
+PUT     /covercalibrator/{device_number}/calibratoron
+    Summary: Turns the calibrator on at the specified brightness
+
+PUT     /covercalibrator/{device_number}/closecover
+    Summary: Initiates cover closing
+
+PUT     /covercalibrator/{device_number}/haltcover
+    Summary: Stops any cover movement that may be in progress
+
+PUT     /covercalibrator/{device_number}/opencover
+    Summary: Initiates cover opening.
+

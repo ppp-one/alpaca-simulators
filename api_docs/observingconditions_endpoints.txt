@@ -1,0 +1,57 @@
+📄 OBSERVINGCONDITIONS API Endpoints
+==================================================
+
+GET     /observingconditions/{device_number}/averageperiod
+    Summary: Returns the time period over which observations will be averaged
+
+PUT     /observingconditions/{device_number}/averageperiod
+    Summary: Sets the time period over which observations will be averaged
+
+GET     /observingconditions/{device_number}/cloudcover
+    Summary: Returns the amount of sky obscured by cloud
+
+GET     /observingconditions/{device_number}/dewpoint
+    Summary: Returns the atmospheric dew point at the observatory
+
+GET     /observingconditions/{device_number}/humidity
+    Summary: Returns the atmospheric humidity at the observatory
+
+GET     /observingconditions/{device_number}/pressure
+    Summary: Returns the atmospheric pressure at the observatory.
+
+GET     /observingconditions/{device_number}/rainrate
+    Summary: Returns the rain rate at the observatory.
+
+GET     /observingconditions/{device_number}/skybrightness
+    Summary: Returns the sky brightness at the observatory
+
+GET     /observingconditions/{device_number}/skyquality
+    Summary: Returns the sky quality at the observatory
+
+GET     /observingconditions/{device_number}/skytemperature
+    Summary: Returns the sky temperature at the observatory
+
+GET     /observingconditions/{device_number}/starfwhm
+    Summary: Returns the seeing at the observatory
+
+GET     /observingconditions/{device_number}/temperature
+    Summary: Returns the temperature at the observatory (Â°C)
+
+GET     /observingconditions/{device_number}/winddirection
+    Summary: Returns the wind direction at the observatory
+
+GET     /observingconditions/{device_number}/windgust
+    Summary: Returns the peak 3 second wind gust at the observatory over the last 2 minutes
+
+GET     /observingconditions/{device_number}/windspeed
+    Summary: Returns the wind speed at the observatory.
+
+PUT     /observingconditions/{device_number}/refresh
+    Summary: Refreshes sensor values from hardware.
+
+GET     /observingconditions/{device_number}/sensordescription
+    Summary: Return a sensor description
+
+GET     /observingconditions/{device_number}/timesincelastupdate
+    Summary: Return the time since the sensor value was last updated
+

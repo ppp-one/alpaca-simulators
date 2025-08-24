@@ -1,0 +1,78 @@
+📄 DOME API Endpoints
+==================================================
+
+GET     /dome/{device_number}/altitude
+    Summary: The dome altitude (degrees - horizon zero, increasing positive to 90 zenith).
+
+GET     /dome/{device_number}/athome
+    Summary: Indicates whether the dome is in the home position.
+
+GET     /dome/{device_number}/atpark
+    Summary: Indicates whether the dome is at the park position
+
+GET     /dome/{device_number}/azimuth
+    Summary: The dome azimuth (degrees - North zero, increasing clockwise: 90 East, 180 South, 270 West)
+
+GET     /dome/{device_number}/canfindhome
+    Summary: Indicates whether the dome can find the home position.
+
+GET     /dome/{device_number}/canpark
+    Summary: Indicates whether the dome can be parked.
+
+GET     /dome/{device_number}/cansetaltitude
+    Summary: Indicates whether the dome altitude can be set
+
+GET     /dome/{device_number}/cansetazimuth
+    Summary: Indicates whether the dome azimuth can be set
+
+GET     /dome/{device_number}/cansetpark
+    Summary: Indicates whether the dome park position can be set
+
+GET     /dome/{device_number}/cansetshutter
+    Summary: Indicates whether the dome shutter can be opened
+
+GET     /dome/{device_number}/canslave
+    Summary: Indicates whether the dome supports slaving to a telescope
+
+GET     /dome/{device_number}/cansyncazimuth
+    Summary: Indicates whether the dome azimuth position can be synched
+
+GET     /dome/{device_number}/shutterstatus
+    Summary: Status of the dome shutter or roll-off roof
+
+GET     /dome/{device_number}/slaved
+    Summary: Indicates whether the dome is slaved to the telescope
+
+PUT     /dome/{device_number}/slaved
+    Summary: Sets whether the dome is slaved to the telescope
+
+GET     /dome/{device_number}/slewing
+    Summary: Indicates whether the any part of the dome is moving
+
+PUT     /dome/{device_number}/abortslew
+    Summary: Immediately cancel current dome operation.
+
+PUT     /dome/{device_number}/closeshutter
+    Summary: Close the shutter or otherwise shield telescope from the sky.
+
+PUT     /dome/{device_number}/findhome
+    Summary: Start operation to search for the dome home position.
+
+PUT     /dome/{device_number}/openshutter
+    Summary: Open shutter or otherwise expose telescope to the sky.
+
+PUT     /dome/{device_number}/park
+    Summary: Rotate dome in azimuth to park position.
+
+PUT     /dome/{device_number}/setpark
+    Summary: Set the current azimuth, altitude position of dome to be the park position
+
+PUT     /dome/{device_number}/slewtoaltitude
+    Summary: Slew the dome to the given altitude position.
+
+PUT     /dome/{device_number}/slewtoazimuth
+    Summary: Slew the dome to the given azimuth position.
+
+PUT     /dome/{device_number}/synctoazimuth
+    Summary: Synchronize the current position of the dome to the given azimuth.
+

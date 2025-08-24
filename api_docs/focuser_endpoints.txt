@@ -1,0 +1,39 @@
+📄 FOCUSER API Endpoints
+==================================================
+
+GET     /focuser/{device_number}/absolute
+    Summary: Indicates whether the focuser is capable of absolute position.
+
+GET     /focuser/{device_number}/ismoving
+    Summary: Indicates whether the focuser is currently moving.
+
+GET     /focuser/{device_number}/maxincrement
+    Summary: Returns the focuser's maximum increment size.
+
+GET     /focuser/{device_number}/maxstep
+    Summary: Returns the focuser's maximum step size.
+
+GET     /focuser/{device_number}/position
+    Summary: Returns the focuser's current position.
+
+GET     /focuser/{device_number}/stepsize
+    Summary: Returns the focuser's step size.
+
+GET     /focuser/{device_number}/tempcomp
+    Summary: Retrieves the state of temperature compensation mode
+
+PUT     /focuser/{device_number}/tempcomp
+    Summary: Sets the device's temperature compensation mode.
+
+GET     /focuser/{device_number}/tempcompavailable
+    Summary: Indicates whether the focuser has temperature compensation.
+
+GET     /focuser/{device_number}/temperature
+    Summary: Returns the focuser's current temperature.
+
+PUT     /focuser/{device_number}/halt
+    Summary: Immediatley stops focuser motion.
+
+PUT     /focuser/{device_number}/move
+    Summary: Moves the focuser to a new position.
+

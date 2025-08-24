@@ -1,0 +1,51 @@
+📄 COMMON API Endpoints
+==================================================
+
+PUT     /{device_type}/{device_number}/action
+    Summary: Invokes the named device-specific action.
+
+PUT     /{device_type}/{device_number}/commandblind
+    Summary: Transmits an arbitrary string to the device
+
+PUT     /{device_type}/{device_number}/commandbool
+    Summary: Transmits an arbitrary string to the device and returns a boolean value from the device.
+
+PUT     /{device_type}/{device_number}/commandstring
+    Summary: Transmits an arbitrary string to the device and returns a string value from the device.
+
+PUT     /{device_type}/{device_number}/connect
+    Summary: Starts an asynchronous connect to the device.
+
+GET     /{device_type}/{device_number}/connected
+    Summary: Retrieves the connected state of the device
+
+PUT     /{device_type}/{device_number}/connected
+    Summary: Sets the connected state of the device
+
+GET     /{device_type}/{device_number}/connecting
+    Summary: Completion variable for the asynchronous Connect() and Disconnect() methods.
+
+GET     /{device_type}/{device_number}/description
+    Summary: Device description
+
+GET     /{device_type}/{device_number}/devicestate
+    Summary: Returns the device's operational state in a single call.
+
+PUT     /{device_type}/{device_number}/disconnect
+    Summary: Starts an asynchronous disconnect from the device.
+
+GET     /{device_type}/{device_number}/driverinfo
+    Summary: Device driver description
+
+GET     /{device_type}/{device_number}/driverversion
+    Summary: Driver Version
+
+GET     /{device_type}/{device_number}/interfaceversion
+    Summary: The ASCOM Device interface version number that this device supports.
+
+GET     /{device_type}/{device_number}/name
+    Summary: Device name
+
+GET     /{device_type}/{device_number}/supportedactions
+    Summary: Returns the list of action names supported by this driver.
+
