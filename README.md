@@ -33,13 +33,32 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # On Windows
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
 ```
 
-Then clone and run the simulator:
+Then clone the repository:
 
 ```bash
 git clone https://github.com/ppp-one/alpaca-simulators
 cd alpaca-simulators
+```
+
+### (Recommended) Create and activate a virtual environment with uv
+
+```bash
+uv venv .venv
+source .venv/bin/activate
+```
+
+### Install dependencies from requirements.txt
+
+```bash
+uv pip install -r requirements.txt
+```
+
+### Run the simulator
+
+```bash
 uv run uvicorn observatory_simulator.main:app --host 0.0.0.0 --port 11111
 ```
 
