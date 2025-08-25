@@ -52,8 +52,8 @@ devices:
       bayeroffsety: 0
       binx: 1
       biny: 1
-      numx: 1024
-      numy: 1024
+      numx: 2048
+      numy: 2048
       startx: 0
       starty: 0
 

@@ -25,6 +25,12 @@ import numpy as np
 
 router = APIRouter()
 
+image_cache = {}
+
+
+def make_cache_key(ra, dec, duration, light):
+    return f"{ra}_{dec}_{duration}_{light}"
+
 
 async def bytes_generator(image_array, numx, numy):
     b = int(1).to_bytes(4, "little")  # metaversion
@@ -72,7 +78,7 @@ async def exposure_task(device_number: int, duration: float, light: bool):
         update_device_state(
             "camera", device_number, {"camera_state": CameraStates.READING}
         )
-        await asyncio.sleep(0.5)  # Simulate readout time
+        await asyncio.sleep(0.01)  # Simulate readout time
 
         # Generate image using cabaret
         cam_state = get_device_state("camera", device_number)
@@ -116,12 +122,24 @@ async def exposure_task(device_number: int, duration: float, light: bool):
         )
 
         # Generate star field image
-        image_data = cabaret_observatory.generate_image(
-            ra=(ra / 24) * 360,
-            dec=dec,
-            exp_time=duration,
-            light=1 if light else 0,
-        )
+        # image_data = cabaret_observatory.generate_image(
+        #     ra=(ra / 24) * 360,
+        #     dec=dec,
+        #     exp_time=duration,
+        #     light=1 if light else 0,
+        # )
+        # In your exposure_task or wherever image is generated
+        key = make_cache_key(ra, dec, duration, light)
+        if key in image_cache:
+            image_data = image_cache[key]
+        else:
+            image_data = cabaret_observatory.generate_image(
+                ra=(ra / 24) * 360,
+                dec=dec,
+                exp_time=duration,
+                light=1 if light else 0,
+            )
+            image_cache[key] = image_data
 
         # Update to download state with image ready
         update_device_state(
