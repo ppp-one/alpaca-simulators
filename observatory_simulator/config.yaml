@@ -23,7 +23,7 @@ devices:
       coolerpower: 0.0
       electronsperadu: 1.5
       exposuremax: 3600.0
-      exposuremin: 0.001
+      exposuremin: 0.0
       exposureresolution: 0.001
       fastreadout: false
       fullwellcapacity: 50000

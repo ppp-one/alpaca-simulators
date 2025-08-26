@@ -28,8 +28,8 @@ router = APIRouter()
 image_cache = {}
 
 
-def make_cache_key(ra, dec, duration, light):
-    return f"{ra}_{dec}_{duration}_{light}"
+def make_cache_key(ra, dec, duration, light, focus):
+    return f"{ra}_{dec}_{duration}_{light}_{focus}"
 
 
 async def bytes_generator(image_array, numx, numy):
@@ -129,7 +129,7 @@ async def exposure_task(device_number: int, duration: float, light: bool):
         #     light=1 if light else 0,
         # )
         # In your exposure_task or wherever image is generated
-        key = make_cache_key(ra, dec, duration, light)
+        key = make_cache_key(ra, dec, duration, light, focuser_state.get("position", 0))
         if key in image_cache:
             image_data = image_cache[key]
         else:
@@ -201,8 +201,8 @@ def get_imagearray(
     validate_device("camera", device_number)
     state = get_device_state("camera", device_number)
 
-    if not state.get("image_ready"):
-        raise AlpacaError(0x40D, "Image not ready")
+    # if not state.get("image_ready"):
+    #     raise AlpacaError(0x40D, "Image not ready")
 
     image_data = state.get("image_data")
     if image_data is None:
@@ -217,7 +217,7 @@ def get_imagearray(
         {
             "camera_state": CameraStates.IDLE,
             "image_ready": False,
-            "image_data": None,
+            # "image_data": None,
             "percentcompleted": 0,
         },
     )
