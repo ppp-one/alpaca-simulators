@@ -163,7 +163,7 @@ async def test_interface(request: Request):
 
 
 @app.get("/reload")
-async def reload_config():
+async def reload_config_state():
     """Reload default state config"""
     reload_config()
     return {"message": "State config reloaded"}
