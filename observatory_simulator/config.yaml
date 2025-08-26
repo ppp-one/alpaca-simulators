@@ -68,8 +68,8 @@ devices:
       alignmentmode: 1  # German Polar
       aperturearea: 0.785
       aperturediameter: 1.0
-      athome: false
-      atpark: false
+      athome: true
+      atpark: true
       canfindhome: true
       canpark: true
       canpulseguide: true
@@ -116,8 +116,8 @@ devices:
       driverversion: "1.0.0"
       interfaceversion: 2
       altitude: 45.0
-      athome: false
-      atpark: false
+      athome: true
+      atpark: true
       azimuth: 0.0
       canfindhome: true
       canpark: true

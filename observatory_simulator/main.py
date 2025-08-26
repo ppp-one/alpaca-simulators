@@ -16,7 +16,7 @@ from observatory_simulator.api import (
     dome,
 )
 from observatory_simulator.api.common import AlpacaError
-from observatory_simulator.state import get_server_transaction_id
+from observatory_simulator.state import get_server_transaction_id, reload_config
 from observatory_simulator.endpoint_discovery import (
     discover_device_endpoints,
     get_action_endpoints,
@@ -160,6 +160,13 @@ async def test_interface(request: Request):
             "endpoints": endpoints,
         },
     )
+
+
+@app.get("/reload")
+async def reload_config():
+    """Reload default state config"""
+    reload_config()
+    return {"message": "State config reloaded"}
 
 
 @app.get("/api/v1")
