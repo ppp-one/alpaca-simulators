@@ -1,27 +1,28 @@
 import asyncio
-import time
 from datetime import datetime, timezone
-from fastapi import APIRouter, Path, Body, BackgroundTasks, Query, Form
-from fastapi.responses import StreamingResponse
-from observatory_simulator.state import (
-    get_device_state,
-    update_device_state,
-    get_device_config,
-    get_server_transaction_id,
-    BoolResponse,
-    IntResponse,
-    DoubleResponse,
-    StringResponse,
-    StringArrayResponse,
-    ImageArrayResponse,
-    AlpacaResponse,
-    CameraStates,
-    SensorTypes,
-    GuideDirections,
-)
-from observatory_simulator.api.common import AlpacaError, validate_device
+
 import cabaret
 import numpy as np
+from fastapi import APIRouter, BackgroundTasks, Form, Path, Query
+from fastapi.responses import StreamingResponse
+
+from observatory_simulator.api.common import AlpacaError, validate_device
+from observatory_simulator.state import (
+    AlpacaResponse,
+    BoolResponse,
+    CameraStates,
+    DoubleResponse,
+    GuideDirections,
+    ImageArrayResponse,
+    IntResponse,
+    SensorTypes,
+    StringArrayResponse,
+    StringResponse,
+    get_device_config,
+    get_device_state,
+    get_server_transaction_id,
+    update_device_state,
+)
 
 router = APIRouter()
 

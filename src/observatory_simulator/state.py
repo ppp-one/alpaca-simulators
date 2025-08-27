@@ -1,30 +1,15 @@
-import yaml
 import os
 from collections import defaultdict
 from pydantic import BaseModel
 from typing import Any, Dict, Optional, List
-from datetime import datetime
 import threading
 
-
-# Load configuration with proper path handling
-def _load_config():
-    """Load configuration with proper path resolution"""
-    # Try relative path first (for when running from project root)
-    config_path = "observatory_simulator/config.yaml"
-    if not os.path.exists(config_path):
-        # Try absolute path relative to this file
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        config_path = os.path.join(current_dir, "config.yaml")
-
-    if not os.path.exists(config_path):
-        raise FileNotFoundError(f"Cannot find config.yaml at expected locations")
-
-    with open(config_path, "r") as f:
-        return yaml.safe_load(f)
+from .config import Config
 
 
-config = _load_config()
+# Load configuration
+CONFIG = Config(os.environ.get("ASTRA_SIMULATORS_CONFIG", "config.yaml"))
+config = CONFIG.get()
 
 
 # --- Pydantic Models for API Responses ---
@@ -385,7 +370,7 @@ def validate_device_exists(device_type: str, device_number: int) -> bool:
 def reload_config() -> None:
     """Reload configuration from file (useful for development)"""
     global config
-    config = _load_config()
+    config = CONFIG.reload().get()
     # Clear existing state so it will be re-initialized with new config
     global _state
     with _state_lock:

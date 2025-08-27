@@ -50,22 +50,22 @@ uv venv .venv
 source .venv/bin/activate
 ```
 
-### Install dependencies from requirements.txt
+### Install project
 
 ```bash
-uv pip install -r requirements.txt
+uv pip install .
 ```
 
 ### Run the simulator
 
 ```bash
-uv run uvicorn observatory_simulator.main:app --host 0.0.0.0 --port 11111
+uv run alpaca-simulators --host 0.0.0.0 --port 11111
 ```
 
 For development with auto-reload:
 
 ```bash
-uv run uvicorn observatory_simulator.main:app --host 0.0.0.0 --port 11111 --reload
+uv run alpaca-simulators --host 0.0.0.0 --port 11111 --reload
 ```
 
 ## Usage
@@ -98,12 +98,17 @@ This test interface is particularly useful for:
 
 ### Device Configuration
 
-All device properties are configured in `observatory_simulator/config.yaml`. You can modify:
+On first run, the simulator generates `src/observatory_simulator/config/config.yaml` from a template. You can modify this file to set:
 
 - Device names and descriptions
 - Initial property values
 - Capabilities and limits
 - Available options (e.g., filter names, readout modes)
+
+You can create and maintain multiple configuration files for different setups in `src/observatory_simulator/config`. To select them, pass their filename with the `--config option`:
+```bash
+uv run alpaca-simulators --config my_config.yaml
+```
 
 ### Example API Calls
 
@@ -134,7 +139,10 @@ The simulator is built with:
 ```
 observatory_simulator/
 ├── main.py              # FastAPI application and routing
-├── config.yaml          # Device configuration
+├── config/              # Device-specific API implementations
+│   ├── template.yaml    # Template device configuration tracked by git
+│   ├── config.yaml      # Default device configuration
+├── config.py            # Configuration class
 ├── state.py             # Global state management
 ├── endpoint_discovery.py # Dynamic endpoint discovery
 ├── api/                 # Device-specific API implementations

@@ -1,26 +1,28 @@
-from fastapi import APIRouter, Path, Query, Body, Form
 import math
 from datetime import datetime, timezone
+from time import sleep
+
+from fastapi import APIRouter, Form, Path, Query
+
+from observatory_simulator.api.common import AlpacaError, validate_device
 from observatory_simulator.state import (
-    get_device_state,
-    update_device_state,
-    get_device_config,
-    get_server_transaction_id,
+    AlignmentModes,
+    AlpacaResponse,
     BoolResponse,
-    IntResponse,
     DoubleResponse,
+    DriveRates,
+    EquatorialCoordinateType,
+    GuideDirections,
+    IntResponse,
+    PierSide,
     StringArrayResponse,
     StringResponse,
-    AlpacaResponse,
     TelescopeAxes,
-    DriveRates,
-    PierSide,
-    GuideDirections,
-    AlignmentModes,
-    EquatorialCoordinateType,
+    get_device_config,
+    get_device_state,
+    get_server_transaction_id,
+    update_device_state,
 )
-from observatory_simulator.api.common import validate_device, AlpacaError
-from time import sleep
 
 router = APIRouter()
 

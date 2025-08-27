@@ -181,3 +181,7 @@ cython_debug/
 .cursorindexingignore
 
 .DS_Store
+
+# Config
+**/config/*.yaml
+!**/config/template.yaml
