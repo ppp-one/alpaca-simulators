@@ -1,27 +1,29 @@
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import JSONResponse, HTMLResponse
+import os
+
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
+
 from observatory_simulator.api import (
-    common,
     camera,
-    safetymonitor,
+    common,
+    covercalibrator,
+    dome,
     filterwheel,
     focuser,
-    rotator,
-    switch,
     observingconditions,
-    covercalibrator,
+    rotator,
+    safetymonitor,
+    switch,
     telescope,
-    dome,
 )
 from observatory_simulator.api.common import AlpacaError
-from observatory_simulator.state import get_server_transaction_id, reload_config
 from observatory_simulator.endpoint_discovery import (
     discover_device_endpoints,
     get_action_endpoints,
 )
-import os
+from observatory_simulator.state import get_server_transaction_id, reload_config
 
 app = FastAPI(
     title="Alpaca Observatory Simulator",
