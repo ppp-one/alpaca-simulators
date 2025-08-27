@@ -1389,8 +1389,6 @@ def slewtocoordinatesasync(
     if Declination < -90.0 or Declination > 90.0:
         raise AlpacaError(0x402, "Declination must be between -90 and +90 degrees")
 
-    print("PUT Slew to Coordinates Async:", RightAscension, Declination)
-
     # Start async slew
     update_device_state(
         "telescope",
@@ -1403,9 +1401,7 @@ def slewtocoordinatesasync(
         },
     )
 
-    print("PUT Slew to Coordinates Async Complete")
-
-    sleep(5)
+    sleep(3)
 
     update_device_state(
         "telescope",
