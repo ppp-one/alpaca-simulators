@@ -94,6 +94,12 @@ async def exposure_task(device_number: int, duration: float, light: bool):
         # Get current coordinates from telescope
         ra = tel_state.get("rightascension", 0.0)
         dec = tel_state.get("declination", 0.0)
+        # gaia breaks
+        if dec >= 90.0 or dec <= -90.0:
+            dec = 89.99 if dec >= 0 else -89.99
+
+        if ra <= 0.0 or ra >= 24.0:
+            ra = 0.01 if ra <= 0.0 else 23.99
 
         # Initialise cabaret
         cabaret_camera = cabaret.Camera(

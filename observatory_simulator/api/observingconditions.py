@@ -287,10 +287,10 @@ def set_skybrightness(
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
 
-    if SkyBrightness < 10.0 or SkyBrightness > 25.0:
-        raise AlpacaError(
-            0x402, "Sky brightness must be between 10.0 and 25.0 mag/arcsec²"
-        )
+    # if SkyBrightness < 10.0 or SkyBrightness > 25.0:
+    #     raise AlpacaError(
+    #         0x402, "Sky brightness must be between 10.0 and 25.0 mag/arcsec²"
+    #     )
 
     update_device_state(
         "observingconditions", device_number, {"skybrightness": SkyBrightness}
