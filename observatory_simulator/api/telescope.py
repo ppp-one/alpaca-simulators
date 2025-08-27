@@ -1177,8 +1177,8 @@ def park(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0
     # raise AlpacaError(0x407, "Device is not connected")
 
     config = get_device_config("telescope", device_number)
-    park_ra = config.get("parkrightascension", 0.0)
-    park_dec = config.get("parkdeclination", 90.0)
+    park_ra = config.get("parkrightascension", 180.0)
+    park_dec = config.get("parkdeclination", 45.0)
 
     update_device_state(
         "telescope",
