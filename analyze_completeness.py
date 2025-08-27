@@ -65,9 +65,9 @@ def normalize_path(path, device_type):
 
 def analyze_device_completeness(device_type):
     """Analyze completeness for a specific device type"""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"ANALYZING {device_type.upper()} COMPLETENESS")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Read expected endpoints from API docs
     api_doc_path = f"api_docs/{device_type}_endpoints.txt"
@@ -132,9 +132,9 @@ def analyze_device_completeness(device_type):
 
 def analyze_common_endpoints():
     """Analyze common endpoints implementation"""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"ANALYZING COMMON ENDPOINTS")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Read expected common endpoints
     common_doc_path = "api_docs/common_endpoints.txt"
@@ -225,9 +225,9 @@ def main():
             device_stats.append(stats)
 
     # Summary
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"SUMMARY")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     if common_stats:
         print(f"Common endpoints: {common_stats['completion_rate']:.1f}% complete")

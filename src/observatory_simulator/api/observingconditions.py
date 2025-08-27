@@ -1,15 +1,14 @@
-from fastapi import APIRouter, Path, Query, Form
+from fastapi import APIRouter, Form, Path, Query
+
+from observatory_simulator.api.common import AlpacaError, validate_device
 from observatory_simulator.state import (
-    get_device_state,
-    update_device_state,
-    get_device_config,
-    get_server_transaction_id,
+    AlpacaResponse,
     DoubleResponse,
     StringResponse,
-    AlpacaResponse,
+    get_device_state,
+    get_server_transaction_id,
+    update_device_state,
 )
-from observatory_simulator.api.common import validate_device, AlpacaError
-import time
 
 router = APIRouter()
 

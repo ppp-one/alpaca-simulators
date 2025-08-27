@@ -1,20 +1,21 @@
-from fastapi import APIRouter, Path, Query, Request, HTTPException, Body, Form
+import json
+from typing import Any, Dict
+
+from fastapi import APIRouter, Form, Path, Query, Request
+
 from observatory_simulator.state import (
+    AlpacaResponse,
+    BoolResponse,
+    DeviceStateResponse,
+    IntResponse,
+    StringArrayResponse,
+    StringResponse,
     get_device_config,
     get_device_state,
+    get_server_transaction_id,
     update_device_state,
     validate_device_exists,
-    BoolResponse,
-    StringResponse,
-    IntResponse,
-    DoubleResponse,
-    StringArrayResponse,
-    get_server_transaction_id,
-    AlpacaResponse,
-    DeviceStateResponse,
 )
-from typing import Any, Dict, Optional
-import json
 
 router = APIRouter()
 
