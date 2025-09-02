@@ -50,7 +50,7 @@ class Config:
         if not self._config_path.exists():
             self._initialise_with_default_config()
 
-        with open(self._config_path, "r", encoding="utf-8") as f:
+        with open(self._config_path, encoding="utf-8") as f:
             return yaml.safe_load(f)
 
     def _initialise_with_default_config(self):
@@ -58,9 +58,7 @@ class Config:
         if not self.CONFIG_DIR.exists():
             raise FileNotFoundError(f"Config directory not found: {self.CONFIG_DIR!s}")
         if not self._DEFAULT_PATH.exists():
-            raise FileNotFoundError(
-                f"Default config not found at {self._DEFAULT_PATH!s}"
-            )
+            raise FileNotFoundError(f"Default config not found at {self._DEFAULT_PATH!s}")
 
         shutil.copyfile(self._DEFAULT_PATH, self._config_path)
 

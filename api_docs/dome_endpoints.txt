@@ -75,4 +75,3 @@ PUT     /dome/{device_number}/slewtoazimuth
 
 PUT     /dome/{device_number}/synctoazimuth
     Summary: Synchronize the current position of the dome to the given azimuth.
-

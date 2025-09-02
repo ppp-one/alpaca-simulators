@@ -33,4 +33,3 @@ PUT     /covercalibrator/{device_number}/haltcover
 
 PUT     /covercalibrator/{device_number}/opencover
     Summary: Initiates cover opening.
-

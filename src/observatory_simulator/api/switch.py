@@ -17,9 +17,7 @@ router = APIRouter()
 
 
 @router.get("/switch/{device_number}/maxswitch", response_model=IntResponse)
-def get_maxswitch(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_maxswitch(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("switch", device_number)
     config = get_device_config("switch", device_number)
     return IntResponse(
@@ -93,7 +91,7 @@ def get_getswitch(
         value = switches[str(Id)].get("value", False)
 
     # Convert to boolean
-    bool_value = bool(value) if isinstance(value, (int, float)) else value
+    bool_value = bool(value) if isinstance(value, int | float) else value
 
     return BoolResponse(
         Value=bool_value,
@@ -102,9 +100,7 @@ def get_getswitch(
     )
 
 
-@router.get(
-    "/switch/{device_number}/getswitchdescription", response_model=StringResponse
-)
+@router.get("/switch/{device_number}/getswitchdescription", response_model=StringResponse)
 def get_getswitchdescription(
     device_number: int = Path(..., ge=0),
     Id: int = Query(...),
@@ -338,7 +334,7 @@ def set_setswitchname(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("switch", device_number)
-    state = get_device_state("switch", device_number)
+    # state = get_device_state("switch", device_number)
     config = get_device_config("switch", device_number)
 
     # if not state.get("connected"):

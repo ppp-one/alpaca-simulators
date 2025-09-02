@@ -8,15 +8,9 @@ logging.basicConfig(level=logging.INFO)
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Run the FastAPI application with Uvicorn."
-    )
-    parser.add_argument(
-        "--host", type=str, default="0.0.0.0", help="Host to run the server on."
-    )
-    parser.add_argument(
-        "--port", type=int, default=11111, help="Port to run the server on."
-    )
+    parser = argparse.ArgumentParser(description="Run the FastAPI application with Uvicorn.")
+    parser.add_argument("--host", type=str, default="0.0.0.0", help="Host to run the server on.")
+    parser.add_argument("--port", type=int, default=11111, help="Port to run the server on.")
     parser.add_argument(
         "--config",
         type=str,

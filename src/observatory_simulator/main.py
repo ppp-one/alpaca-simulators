@@ -27,7 +27,9 @@ from observatory_simulator.state import get_server_transaction_id, reload_config
 
 app = FastAPI(
     title="Alpaca Observatory Simulator",
-    description="A simulator for Alpaca devices based on the AlpacaDeviceAPI_v1.yaml specification.",
+    description=(
+        "A simulator for Alpaca devices based on the AlpacaDeviceAPI_v1.yaml specification."
+    ),
     version="1.0.0",
 )
 
@@ -41,9 +43,7 @@ app.add_middleware(
 )
 
 # Setup templates
-templates = Jinja2Templates(
-    directory=os.path.join(os.path.dirname(__file__), "templates")
-)
+templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
 
 
 @app.exception_handler(AlpacaError)
@@ -83,15 +83,23 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         except (ValueError, TypeError):
             pass
 
+    error_response = {
+        "error": {
+            "message": exc.detail,
+            "client_transaction_id": client_transaction_id,
+        }
+    }
+
     if exc.status_code == 404:
+        error_response["url"] = request.url
         return JSONResponse(
             status_code=400,  # Alpaca uses 400 for bad requests
-            content=f"Device or method not found: {request.url.path}",
+            content=f"Device or method not found: {error_response}",
         )
     elif exc.status_code == 422:
         return JSONResponse(
             status_code=400,  # Alpaca uses 400 for bad requests
-            content=f"Invalid parameters: {exc.detail}",
+            content=f"Invalid parameters: {error_response}",
         )
     else:
         return JSONResponse(status_code=exc.status_code, content=exc.detail)
@@ -127,9 +135,7 @@ app.include_router(filterwheel.router, prefix="/api/v1", tags=["FilterWheel"])
 app.include_router(focuser.router, prefix="/api/v1", tags=["Focuser"])
 app.include_router(rotator.router, prefix="/api/v1", tags=["Rotator"])
 app.include_router(switch.router, prefix="/api/v1", tags=["Switch"])
-app.include_router(
-    observingconditions.router, prefix="/api/v1", tags=["ObservingConditions"]
-)
+app.include_router(observingconditions.router, prefix="/api/v1", tags=["ObservingConditions"])
 app.include_router(covercalibrator.router, prefix="/api/v1", tags=["CoverCalibrator"])
 app.include_router(telescope.router, prefix="/api/v1", tags=["Telescope"])
 app.include_router(dome.router, prefix="/api/v1", tags=["Dome"])
@@ -227,15 +233,12 @@ async def get_configured_devices():
     from observatory_simulator.state import config
 
     devices = []
-    device_number = 0
 
     for device_type, device_configs in config.get("devices", {}).items():
         for dev_num, dev_config in device_configs.items():
             devices.append(
                 {
-                    "DeviceName": dev_config.get(
-                        "name", f"Simulator {device_type.title()}"
-                    ),
+                    "DeviceName": dev_config.get("name", f"Simulator {device_type.title()}"),
                     "DeviceType": device_type.title(),
                     "DeviceNumber": dev_num,
                     "UniqueID": f"{device_type}-{dev_num}",

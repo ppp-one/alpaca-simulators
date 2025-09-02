@@ -48,4 +48,3 @@ GET     /{device_type}/{device_number}/name
 
 GET     /{device_type}/{device_number}/supportedactions
     Summary: Returns the list of action names supported by this driver.
-

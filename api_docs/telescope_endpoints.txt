@@ -240,4 +240,3 @@ PUT     /telescope/{device_number}/synctotarget
 
 PUT     /telescope/{device_number}/unpark
     Summary: Unparks the mount.
-

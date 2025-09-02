@@ -12,4 +12,3 @@ GET     /filterwheel/{device_number}/position
 
 PUT     /filterwheel/{device_number}/position
     Summary: Sets the filter wheel position
-

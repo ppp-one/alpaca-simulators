@@ -13,9 +13,7 @@ router = APIRouter()
 
 
 @router.get("/safetymonitor/{device_number}/issafe", response_model=BoolResponse)
-def get_issafe(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_issafe(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("safetymonitor", device_number)
     state = get_device_state("safetymonitor", device_number)
     return BoolResponse(
@@ -32,7 +30,7 @@ def set_issafe(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("safetymonitor", device_number)
-    state = get_device_state("safetymonitor", device_number)
+    # state = get_device_state("safetymonitor", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")

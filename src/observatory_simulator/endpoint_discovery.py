@@ -3,12 +3,12 @@ Dynamic endpoint discovery for the observatory simulator.
 Analyzes the FastAPI application to determine available endpoints for each device type.
 """
 
-from fastapi import FastAPI
-from typing import Dict, List
 import inspect
 
+from fastapi import FastAPI
 
-def discover_device_endpoints(app: FastAPI) -> Dict[str, Dict[str, List[str]]]:
+
+def discover_device_endpoints(app: FastAPI) -> dict[str, dict[str, list[str]]]:
     """
     Discover all available endpoints for each device type by analyzing the FastAPI routes.
 
@@ -48,9 +48,7 @@ def discover_device_endpoints(app: FastAPI) -> Dict[str, Dict[str, List[str]]]:
                             "device_number",
                             "ClientTransactionID",
                         ]:
-                            params.append(
-                                {"name": param_name, "type": param.annotation.__name__}
-                            )
+                            params.append({"name": param_name, "type": param.annotation.__name__})
 
                     # Initialize device entry if not exists
                     if device_type not in device_endpoints:
@@ -66,17 +64,15 @@ def discover_device_endpoints(app: FastAPI) -> Dict[str, Dict[str, List[str]]]:
                             device_endpoints[device_type][method].append(property_name)
 
                     device_endpoints[device_type]["info"][property_name] = (
-                        params
-                        if (len(params) > 0)
-                        else {"name": "Value", "type": "bool"}
+                        params if (len(params) > 0) else {"name": "Value", "type": "bool"}
                     )
 
     return device_endpoints
 
 
 def get_action_endpoints(
-    device_type: str, endpoints: Dict[str, Dict[str, List[str]]]
-) -> List[str]:
+    device_type: str, endpoints: dict[str, dict[str, list[str]]]
+) -> list[str]:
     """
     Get list of action endpoints (PUT endpoints that don't correspond to properties).
     """

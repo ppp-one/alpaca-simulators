@@ -36,4 +36,3 @@ PUT     /focuser/{device_number}/halt
 
 PUT     /focuser/{device_number}/move
     Summary: Moves the focuser to a new position.
-

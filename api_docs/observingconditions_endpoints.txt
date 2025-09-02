@@ -54,4 +54,3 @@ GET     /observingconditions/{device_number}/sensordescription
 
 GET     /observingconditions/{device_number}/timesincelastupdate
     Summary: Return the time since the sensor value was last updated
-

@@ -16,9 +16,7 @@ router = APIRouter()
 
 
 @router.get("/focuser/{device_number}/absolute", response_model=BoolResponse)
-def get_absolute(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_absolute(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("focuser", device_number)
     config = get_device_config("focuser", device_number)
     return BoolResponse(
@@ -29,9 +27,7 @@ def get_absolute(
 
 
 @router.get("/focuser/{device_number}/ismoving", response_model=BoolResponse)
-def get_ismoving(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_ismoving(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("focuser", device_number)
     state = get_device_state("focuser", device_number)
     return BoolResponse(
@@ -42,9 +38,7 @@ def get_ismoving(
 
 
 @router.get("/focuser/{device_number}/maxincrement", response_model=IntResponse)
-def get_maxincrement(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_maxincrement(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("focuser", device_number)
     config = get_device_config("focuser", device_number)
     return IntResponse(
@@ -55,9 +49,7 @@ def get_maxincrement(
 
 
 @router.get("/focuser/{device_number}/maxstep", response_model=IntResponse)
-def get_maxstep(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_maxstep(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("focuser", device_number)
     config = get_device_config("focuser", device_number)
     return IntResponse(
@@ -68,9 +60,7 @@ def get_maxstep(
 
 
 @router.get("/focuser/{device_number}/position", response_model=IntResponse)
-def get_position(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_position(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("focuser", device_number)
     state = get_device_state("focuser", device_number)
     return IntResponse(
@@ -81,9 +71,7 @@ def get_position(
 
 
 @router.get("/focuser/{device_number}/stepsize", response_model=DoubleResponse)
-def get_stepsize(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_stepsize(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("focuser", device_number)
     config = get_device_config("focuser", device_number)
     return DoubleResponse(
@@ -94,9 +82,7 @@ def get_stepsize(
 
 
 @router.get("/focuser/{device_number}/tempcomp", response_model=BoolResponse)
-def get_tempcomp(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_tempcomp(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("focuser", device_number)
     state = get_device_state("focuser", device_number)
     return BoolResponse(
@@ -113,7 +99,7 @@ def set_tempcomp(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("focuser", device_number)
-    state = get_device_state("focuser", device_number)
+    # state = get_device_state("focuser", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -144,9 +130,7 @@ def get_tempcompavailable(
 
 
 @router.get("/focuser/{device_number}/temperature", response_model=DoubleResponse)
-def get_temperature(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_temperature(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("focuser", device_number)
     state = get_device_state("focuser", device_number)
     return DoubleResponse(
@@ -159,7 +143,7 @@ def get_temperature(
 @router.put("/focuser/{device_number}/halt", response_model=AlpacaResponse)
 def halt(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("focuser", device_number)
-    state = get_device_state("focuser", device_number)
+    # state = get_device_state("focuser", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -179,7 +163,7 @@ def move(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("focuser", device_number)
-    state = get_device_state("focuser", device_number)
+    # state = get_device_state("focuser", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")

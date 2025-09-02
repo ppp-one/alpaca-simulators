@@ -1,5 +1,6 @@
 import json
-from typing import Any, Dict
+import logging
+from typing import Any
 
 from fastapi import APIRouter, Form, Path, Query, Request
 
@@ -34,7 +35,7 @@ def validate_device(device_type: str, device_number: int):
         raise AlpacaError(0x400, f"Device {device_type}:{device_number} not found")
 
 
-async def get_form_data(request: Request) -> Dict[str, Any]:
+async def get_form_data(request: Request) -> dict[str, Any]:
     """Extract form data or JSON data from request"""
     content_type = request.headers.get("content-type", "")
 
@@ -53,16 +54,19 @@ async def get_form_data(request: Request) -> Dict[str, Any]:
             try:
                 form_data = await request.form()
                 return dict(form_data)
-            except:
+            except Exception as e:
                 # If form parsing fails, try JSON
+                logging.debug(f"Failed to parse form data: {e}. Trying JSON...")
                 try:
                     body = await request.body()
                     if body:
                         return json.loads(body)
-                except:
+                except Exception as e:
+                    logging.debug(f"Failed to parse JSON data: {e}")
                     pass
     except Exception as e:
         # If all parsing fails, return empty dict
+        logging.debug(f"Failed to parse request data: {e}")
         pass
 
     return {}
@@ -114,9 +118,7 @@ async def set_connected(
     connected_bool = Connected.lower() in ("true", "1", "yes", "on")
     print(f"Connected boolean for {device_type}:{device_number} is {connected_bool}")
     update_device_state(device_type, device_number, {"connected": connected_bool})
-    print(
-        f"Updated connected state for {device_type}:{device_number} to {connected_bool}"
-    )
+    print(f"Updated connected state for {device_type}:{device_number} to {connected_bool}")
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -154,9 +156,7 @@ def get_driverinfo(
     )
 
 
-@router.get(
-    "/{device_type}/{device_number}/driverversion", response_model=StringResponse
-)
+@router.get("/{device_type}/{device_number}/driverversion", response_model=StringResponse)
 def get_driverversion(
     device_type: str = Path(...),
     device_number: int = Path(..., ge=0),
@@ -171,9 +171,7 @@ def get_driverversion(
     )
 
 
-@router.get(
-    "/{device_type}/{device_number}/interfaceversion", response_model=IntResponse
-)
+@router.get("/{device_type}/{device_number}/interfaceversion", response_model=IntResponse)
 def get_interfaceversion(
     device_type: str = Path(...),
     device_number: int = Path(..., ge=0),
@@ -240,9 +238,7 @@ def action(
     )
 
 
-@router.put(
-    "/{device_type}/{device_number}/commandblind", response_model=AlpacaResponse
-)
+@router.put("/{device_type}/{device_number}/commandblind", response_model=AlpacaResponse)
 def commandblind(
     device_type: str = Path(...),
     device_number: int = Path(..., ge=0),
@@ -279,9 +275,7 @@ def commandbool(
     )
 
 
-@router.put(
-    "/{device_type}/{device_number}/commandstring", response_model=StringResponse
-)
+@router.put("/{device_type}/{device_number}/commandstring", response_model=StringResponse)
 def commandstring(
     device_type: str = Path(...),
     device_number: int = Path(..., ge=0),
@@ -348,9 +342,7 @@ def disconnect(
     )
 
 
-@router.get(
-    "/{device_type}/{device_number}/devicestate", response_model=DeviceStateResponse
-)
+@router.get("/{device_type}/{device_number}/devicestate", response_model=DeviceStateResponse)
 def get_devicestate(
     device_type: str = Path(...),
     device_number: int = Path(..., ge=0),

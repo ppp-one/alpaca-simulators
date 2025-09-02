@@ -6354,4 +6354,3 @@ components:
         - title: B1950
           description: B1950 equinox, FK4 reference frame.
           const: 4
-

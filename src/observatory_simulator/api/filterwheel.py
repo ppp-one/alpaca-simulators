@@ -15,12 +15,8 @@ from observatory_simulator.state import (
 router = APIRouter()
 
 
-@router.get(
-    "/filterwheel/{device_number}/focusoffsets", response_model=IntArrayResponse
-)
-def get_focusoffsets(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+@router.get("/filterwheel/{device_number}/focusoffsets", response_model=IntArrayResponse)
+def get_focusoffsets(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("filterwheel", device_number)
     config = get_device_config("filterwheel", device_number)
     return IntArrayResponse(
@@ -31,9 +27,7 @@ def get_focusoffsets(
 
 
 @router.get("/filterwheel/{device_number}/names", response_model=StringArrayResponse)
-def get_names(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_names(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("filterwheel", device_number)
     config = get_device_config("filterwheel", device_number)
     return StringArrayResponse(
@@ -44,9 +38,7 @@ def get_names(
 
 
 @router.get("/filterwheel/{device_number}/position", response_model=IntResponse)
-def get_position(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_position(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("filterwheel", device_number)
     state = get_device_state("filterwheel", device_number)
     return IntResponse(
@@ -63,7 +55,7 @@ def set_position(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("filterwheel", device_number)
-    state = get_device_state("filterwheel", device_number)
+    # state = get_device_state("filterwheel", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")

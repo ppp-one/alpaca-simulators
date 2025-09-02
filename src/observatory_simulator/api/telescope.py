@@ -48,9 +48,7 @@ def degrees_to_hours(degrees):
 
 
 @router.get("/telescope/{device_number}/alignmentmode", response_model=IntResponse)
-def get_alignmentmode(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_alignmentmode(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     config = get_device_config("telescope", device_number)
     return IntResponse(
@@ -61,9 +59,7 @@ def get_alignmentmode(
 
 
 @router.get("/telescope/{device_number}/altitude", response_model=DoubleResponse)
-def get_altitude(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_altitude(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
     # if not state.get("connected"):
@@ -76,9 +72,7 @@ def get_altitude(
 
 
 @router.get("/telescope/{device_number}/aperturearea", response_model=DoubleResponse)
-def get_aperturearea(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_aperturearea(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     config = get_device_config("telescope", device_number)
     diameter = config.get("aperturediameter", 8.0)  # m
@@ -90,9 +84,7 @@ def get_aperturearea(
     )
 
 
-@router.get(
-    "/telescope/{device_number}/aperturediameter", response_model=DoubleResponse
-)
+@router.get("/telescope/{device_number}/aperturediameter", response_model=DoubleResponse)
 def get_aperturediameter(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):
@@ -106,9 +98,7 @@ def get_aperturediameter(
 
 
 @router.get("/telescope/{device_number}/athome", response_model=BoolResponse)
-def get_athome(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_athome(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
     return BoolResponse(
@@ -119,9 +109,7 @@ def get_athome(
 
 
 @router.get("/telescope/{device_number}/atpark", response_model=BoolResponse)
-def get_atpark(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_atpark(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
     return BoolResponse(
@@ -132,9 +120,7 @@ def get_atpark(
 
 
 @router.get("/telescope/{device_number}/azimuth", response_model=DoubleResponse)
-def get_azimuth(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_azimuth(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
     # if not state.get("connected"):
@@ -147,9 +133,7 @@ def get_azimuth(
 
 
 @router.get("/telescope/{device_number}/canfindhome", response_model=BoolResponse)
-def get_canfindhome(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_canfindhome(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     config = get_device_config("telescope", device_number)
     return BoolResponse(
@@ -160,9 +144,7 @@ def get_canfindhome(
 
 
 @router.get("/telescope/{device_number}/canpark", response_model=BoolResponse)
-def get_canpark(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_canpark(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     config = get_device_config("telescope", device_number)
     return BoolResponse(
@@ -173,9 +155,7 @@ def get_canpark(
 
 
 @router.get("/telescope/{device_number}/canpulseguide", response_model=BoolResponse)
-def get_canpulseguide(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_canpulseguide(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     config = get_device_config("telescope", device_number)
     return BoolResponse(
@@ -185,9 +165,7 @@ def get_canpulseguide(
     )
 
 
-@router.get(
-    "/telescope/{device_number}/cansetdeclinationrate", response_model=BoolResponse
-)
+@router.get("/telescope/{device_number}/cansetdeclinationrate", response_model=BoolResponse)
 def get_cansetdeclinationrate(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):
@@ -214,9 +192,7 @@ def get_cansetguiderates(
 
 
 @router.get("/telescope/{device_number}/cansetpark", response_model=BoolResponse)
-def get_cansetpark(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_cansetpark(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     config = get_device_config("telescope", device_number)
     return BoolResponse(
@@ -227,9 +203,7 @@ def get_cansetpark(
 
 
 @router.get("/telescope/{device_number}/cansetpierside", response_model=BoolResponse)
-def get_cansetpierside(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_cansetpierside(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     config = get_device_config("telescope", device_number)
     return BoolResponse(
@@ -239,9 +213,7 @@ def get_cansetpierside(
     )
 
 
-@router.get(
-    "/telescope/{device_number}/cansetrightascensionrate", response_model=BoolResponse
-)
+@router.get("/telescope/{device_number}/cansetrightascensionrate", response_model=BoolResponse)
 def get_cansetrightascensionrate(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):
@@ -255,9 +227,7 @@ def get_cansetrightascensionrate(
 
 
 @router.get("/telescope/{device_number}/cansettracking", response_model=BoolResponse)
-def get_cansettracking(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_cansettracking(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     config = get_device_config("telescope", device_number)
     return BoolResponse(
@@ -268,9 +238,7 @@ def get_cansettracking(
 
 
 @router.get("/telescope/{device_number}/canslew", response_model=BoolResponse)
-def get_canslew(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_canslew(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     config = get_device_config("telescope", device_number)
     return BoolResponse(
@@ -281,9 +249,7 @@ def get_canslew(
 
 
 @router.get("/telescope/{device_number}/canslewaltaz", response_model=BoolResponse)
-def get_canslewaltaz(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_canslewaltaz(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     config = get_device_config("telescope", device_number)
     return BoolResponse(
@@ -307,9 +273,7 @@ def get_canslewaltazasync(
 
 
 @router.get("/telescope/{device_number}/canslewasync", response_model=BoolResponse)
-def get_canslewasync(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_canslewasync(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     config = get_device_config("telescope", device_number)
     return BoolResponse(
@@ -320,9 +284,7 @@ def get_canslewasync(
 
 
 @router.get("/telescope/{device_number}/cansync", response_model=BoolResponse)
-def get_cansync(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_cansync(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     config = get_device_config("telescope", device_number)
     return BoolResponse(
@@ -333,9 +295,7 @@ def get_cansync(
 
 
 @router.get("/telescope/{device_number}/cansyncaltaz", response_model=BoolResponse)
-def get_cansyncaltaz(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_cansyncaltaz(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     config = get_device_config("telescope", device_number)
     return BoolResponse(
@@ -346,9 +306,7 @@ def get_cansyncaltaz(
 
 
 @router.get("/telescope/{device_number}/canunpark", response_model=BoolResponse)
-def get_canunpark(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_canunpark(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     config = get_device_config("telescope", device_number)
     return BoolResponse(
@@ -359,9 +317,7 @@ def get_canunpark(
 
 
 @router.get("/telescope/{device_number}/declination", response_model=DoubleResponse)
-def get_declination(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_declination(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
     # if not state.get("connected"):
@@ -374,9 +330,7 @@ def get_declination(
 
 
 @router.get("/telescope/{device_number}/declinationrate", response_model=DoubleResponse)
-def get_declinationrate(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_declinationrate(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
     return DoubleResponse(
@@ -393,14 +347,12 @@ def set_declinationrate(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
+    # state = get_device_state("telescope", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
 
-    update_device_state(
-        "telescope", device_number, {"declinationrate": DeclinationRate}
-    )
+    update_device_state("telescope", device_number, {"declinationrate": DeclinationRate})
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -409,9 +361,7 @@ def set_declinationrate(
 
 
 @router.get("/telescope/{device_number}/doesrefraction", response_model=BoolResponse)
-def get_doesrefraction(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_doesrefraction(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
     return BoolResponse(
@@ -428,7 +378,7 @@ def set_doesrefraction(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
+    # state = get_device_state("telescope", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -455,9 +405,7 @@ def get_equatorialsystem(
 
 
 @router.get("/telescope/{device_number}/focallength", response_model=DoubleResponse)
-def get_focallength(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_focallength(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     config = get_device_config("telescope", device_number)
     return DoubleResponse(
@@ -467,9 +415,7 @@ def get_focallength(
     )
 
 
-@router.get(
-    "/telescope/{device_number}/guideratedeclination", response_model=DoubleResponse
-)
+@router.get("/telescope/{device_number}/guideratedeclination", response_model=DoubleResponse)
 def get_guideratedeclination(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):
@@ -482,16 +428,14 @@ def get_guideratedeclination(
     )
 
 
-@router.put(
-    "/telescope/{device_number}/guideratedeclination", response_model=AlpacaResponse
-)
+@router.put("/telescope/{device_number}/guideratedeclination", response_model=AlpacaResponse)
 def set_guideratedeclination(
     device_number: int = Path(..., ge=0),
     GuideRateDeclination: float = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
+    # state = get_device_state("telescope", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -499,9 +443,7 @@ def set_guideratedeclination(
     if GuideRateDeclination < 0:
         raise AlpacaError(0x402, "Guide rate must be positive")
 
-    update_device_state(
-        "telescope", device_number, {"guideratedeclination": GuideRateDeclination}
-    )
+    update_device_state("telescope", device_number, {"guideratedeclination": GuideRateDeclination})
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -509,9 +451,7 @@ def set_guideratedeclination(
     )
 
 
-@router.get(
-    "/telescope/{device_number}/guideraterightascension", response_model=DoubleResponse
-)
+@router.get("/telescope/{device_number}/guideraterightascension", response_model=DoubleResponse)
 def get_guideraterightascension(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):
@@ -524,16 +464,14 @@ def get_guideraterightascension(
     )
 
 
-@router.put(
-    "/telescope/{device_number}/guideraterightascension", response_model=AlpacaResponse
-)
+@router.put("/telescope/{device_number}/guideraterightascension", response_model=AlpacaResponse)
 def set_guideraterightascension(
     device_number: int = Path(..., ge=0),
     GuideRateRightAscension: float = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
+    # state = get_device_state("telescope", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -552,9 +490,7 @@ def set_guideraterightascension(
 
 
 @router.get("/telescope/{device_number}/ispulseguiding", response_model=BoolResponse)
-def get_ispulseguiding(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_ispulseguiding(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
     return BoolResponse(
@@ -565,9 +501,7 @@ def get_ispulseguiding(
 
 
 @router.get("/telescope/{device_number}/rightascension", response_model=DoubleResponse)
-def get_rightascension(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_rightascension(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
     # if not state.get("connected"):
@@ -579,9 +513,7 @@ def get_rightascension(
     )
 
 
-@router.get(
-    "/telescope/{device_number}/rightascensionrate", response_model=DoubleResponse
-)
+@router.get("/telescope/{device_number}/rightascensionrate", response_model=DoubleResponse)
 def get_rightascensionrate(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):
@@ -594,23 +526,19 @@ def get_rightascensionrate(
     )
 
 
-@router.put(
-    "/telescope/{device_number}/rightascensionrate", response_model=AlpacaResponse
-)
+@router.put("/telescope/{device_number}/rightascensionrate", response_model=AlpacaResponse)
 def set_rightascensionrate(
     device_number: int = Path(..., ge=0),
     RightAscensionRate: float = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
+    # state = get_device_state("telescope", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
 
-    update_device_state(
-        "telescope", device_number, {"rightascensionrate": RightAscensionRate}
-    )
+    update_device_state("telescope", device_number, {"rightascensionrate": RightAscensionRate})
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -619,9 +547,7 @@ def set_rightascensionrate(
 
 
 @router.get("/telescope/{device_number}/sideofpier", response_model=IntResponse)
-def get_sideofpier(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_sideofpier(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
     return IntResponse(
@@ -638,7 +564,7 @@ def set_sideofpier(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
+    # state = get_device_state("telescope", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -655,9 +581,7 @@ def set_sideofpier(
 
 
 @router.get("/telescope/{device_number}/siderealtime", response_model=DoubleResponse)
-def get_siderealtime(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_siderealtime(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     config = get_device_config("telescope", device_number)
 
@@ -667,9 +591,7 @@ def get_siderealtime(
 
     # Simplified calculation - in practice this would use proper astronomy formulas
     jd = utc_now.timestamp() / 86400.0 + 2440587.5  # Julian day
-    gmst = 18.697374558 + 24.06570982441908 * (
-        jd - 2451545.0
-    )  # Greenwich Mean Sidereal Time
+    gmst = 18.697374558 + 24.06570982441908 * (jd - 2451545.0)  # Greenwich Mean Sidereal Time
     lst = (gmst + longitude / 15.0) % 24.0  # Local Sidereal Time
 
     return DoubleResponse(
@@ -680,9 +602,7 @@ def get_siderealtime(
 
 
 @router.get("/telescope/{device_number}/siteelevation", response_model=DoubleResponse)
-def get_siteelevation(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_siteelevation(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     config = get_device_config("telescope", device_number)
     return DoubleResponse(
@@ -709,9 +629,7 @@ def set_siteelevation(
 
 
 @router.get("/telescope/{device_number}/sitelatitude", response_model=DoubleResponse)
-def get_sitelatitude(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_sitelatitude(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     config = get_device_config("telescope", device_number)
     return DoubleResponse(
@@ -741,9 +659,7 @@ def set_sitelatitude(
 
 
 @router.get("/telescope/{device_number}/sitelongitude", response_model=DoubleResponse)
-def get_sitelongitude(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_sitelongitude(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     config = get_device_config("telescope", device_number)
     return DoubleResponse(
@@ -773,9 +689,7 @@ def set_sitelongitude(
 
 
 @router.get("/telescope/{device_number}/slewing", response_model=BoolResponse)
-def get_slewing(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_slewing(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
     return BoolResponse(
@@ -786,9 +700,7 @@ def get_slewing(
 
 
 @router.get("/telescope/{device_number}/slewsettletime", response_model=DoubleResponse)
-def get_slewsettletime(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_slewsettletime(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
     return DoubleResponse(
@@ -805,7 +717,7 @@ def set_slewsettletime(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
+    # state = get_device_state("telescope", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -821,9 +733,7 @@ def set_slewsettletime(
     )
 
 
-@router.get(
-    "/telescope/{device_number}/targetdeclination", response_model=DoubleResponse
-)
+@router.get("/telescope/{device_number}/targetdeclination", response_model=DoubleResponse)
 def get_targetdeclination(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):
@@ -836,16 +746,14 @@ def get_targetdeclination(
     )
 
 
-@router.put(
-    "/telescope/{device_number}/targetdeclination", response_model=AlpacaResponse
-)
+@router.put("/telescope/{device_number}/targetdeclination", response_model=AlpacaResponse)
 def set_targetdeclination(
     device_number: int = Path(..., ge=0),
     TargetDeclination: float = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
+    # state = get_device_state("telescope", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -853,9 +761,7 @@ def set_targetdeclination(
     if TargetDeclination < -90.0 or TargetDeclination > 90.0:
         raise AlpacaError(0x402, "Declination must be between -90 and +90 degrees")
 
-    update_device_state(
-        "telescope", device_number, {"targetdeclination": TargetDeclination}
-    )
+    update_device_state("telescope", device_number, {"targetdeclination": TargetDeclination})
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -863,9 +769,7 @@ def set_targetdeclination(
     )
 
 
-@router.get(
-    "/telescope/{device_number}/targetrightascension", response_model=DoubleResponse
-)
+@router.get("/telescope/{device_number}/targetrightascension", response_model=DoubleResponse)
 def get_targetrightascension(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):
@@ -878,16 +782,14 @@ def get_targetrightascension(
     )
 
 
-@router.put(
-    "/telescope/{device_number}/targetrightascension", response_model=AlpacaResponse
-)
+@router.put("/telescope/{device_number}/targetrightascension", response_model=AlpacaResponse)
 def set_targetrightascension(
     device_number: int = Path(..., ge=0),
     TargetRightAscension: float = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
+    # state = get_device_state("telescope", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -895,9 +797,7 @@ def set_targetrightascension(
     if TargetRightAscension < 0.0 or TargetRightAscension >= 24.0:
         raise AlpacaError(0x402, "Right ascension must be between 0 and 24 hours")
 
-    update_device_state(
-        "telescope", device_number, {"targetrightascension": TargetRightAscension}
-    )
+    update_device_state("telescope", device_number, {"targetrightascension": TargetRightAscension})
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -906,9 +806,7 @@ def set_targetrightascension(
 
 
 @router.get("/telescope/{device_number}/tracking", response_model=BoolResponse)
-def get_tracking(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_tracking(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
     return BoolResponse(
@@ -925,7 +823,7 @@ def set_tracking(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
+    # state = get_device_state("telescope", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -939,9 +837,7 @@ def set_tracking(
 
 
 @router.get("/telescope/{device_number}/trackingrate", response_model=IntResponse)
-def get_trackingrate(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_trackingrate(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
     return IntResponse(
@@ -958,7 +854,7 @@ def set_trackingrate(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
+    # state = get_device_state("telescope", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -980,17 +876,11 @@ def set_trackingrate(
     )
 
 
-@router.get(
-    "/telescope/{device_number}/trackingrates", response_model=StringArrayResponse
-)
-def get_trackingrates(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+@router.get("/telescope/{device_number}/trackingrates", response_model=StringArrayResponse)
+def get_trackingrates(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     config = get_device_config("telescope", device_number)
-    rates = config.get(
-        "trackingrates", ["0", "1", "2", "3"]
-    )  # Sidereal, Lunar, Solar, King
+    rates = config.get("trackingrates", ["0", "1", "2", "3"])  # Sidereal, Lunar, Solar, King
     return StringArrayResponse(
         Value=rates,
         ClientTransactionID=ClientTransactionID,
@@ -999,9 +889,7 @@ def get_trackingrates(
 
 
 @router.get("/telescope/{device_number}/utcdate", response_model=StringResponse)
-def get_utcdate(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_utcdate(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     utc_now = datetime.now(timezone.utc)
     return StringResponse(
@@ -1034,7 +922,7 @@ def set_utcdate(
 @router.put("/telescope/{device_number}/abortslew", response_model=AlpacaResponse)
 def abortslew(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
+    # state = get_device_state("telescope", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -1096,9 +984,7 @@ def get_canmoveaxis(
     )
 
 
-@router.get(
-    "/telescope/{device_number}/destinationsideofpier", response_model=IntResponse
-)
+@router.get("/telescope/{device_number}/destinationsideofpier", response_model=IntResponse)
 def get_destinationsideofpier(
     device_number: int = Path(..., ge=0),
     RightAscension: float = Query(...),
@@ -1124,7 +1010,7 @@ def get_destinationsideofpier(
 @router.put("/telescope/{device_number}/findhome", response_model=AlpacaResponse)
 def findhome(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
+    # state = get_device_state("telescope", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -1149,7 +1035,7 @@ def moveaxis(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
+    # state = get_device_state("telescope", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -1173,7 +1059,7 @@ def moveaxis(
 @router.put("/telescope/{device_number}/park", response_model=AlpacaResponse)
 def park(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
+    # state = get_device_state("telescope", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -1208,7 +1094,7 @@ def pulseguide(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
+    # state = get_device_state("telescope", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -1269,7 +1155,7 @@ def slewtoaltaz(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
+    # state = get_device_state("telescope", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -1297,9 +1183,7 @@ def slewtoaltaz(
     )
 
 
-@router.put(
-    "/telescope/{device_number}/slewtoaltazasync", response_model=AlpacaResponse
-)
+@router.put("/telescope/{device_number}/slewtoaltazasync", response_model=AlpacaResponse)
 def slewtoaltazasync(
     device_number: int = Path(..., ge=0),
     Azimuth: float = Form(...),
@@ -1307,7 +1191,7 @@ def slewtoaltazasync(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
+    # state = get_device_state("telescope", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -1330,9 +1214,7 @@ def slewtoaltazasync(
     )
 
 
-@router.put(
-    "/telescope/{device_number}/slewtocoordinates", response_model=AlpacaResponse
-)
+@router.put("/telescope/{device_number}/slewtocoordinates", response_model=AlpacaResponse)
 def slewtocoordinates(
     device_number: int = Path(..., ge=0),
     RightAscension: float = Form(...),
@@ -1340,7 +1222,7 @@ def slewtocoordinates(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
+    # state = get_device_state("telescope", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -1370,9 +1252,7 @@ def slewtocoordinates(
     )
 
 
-@router.put(
-    "/telescope/{device_number}/slewtocoordinatesasync", response_model=AlpacaResponse
-)
+@router.put("/telescope/{device_number}/slewtocoordinatesasync", response_model=AlpacaResponse)
 def slewtocoordinatesasync(
     device_number: int = Path(..., ge=0),
     RightAscension: float = Form(...),
@@ -1380,7 +1260,7 @@ def slewtocoordinatesasync(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
+    # state = get_device_state("telescope", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -1423,9 +1303,7 @@ def slewtocoordinatesasync(
 
 
 @router.put("/telescope/{device_number}/slewtotarget", response_model=AlpacaResponse)
-def slewtotarget(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)
-):
+def slewtotarget(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
 
@@ -1455,12 +1333,8 @@ def slewtotarget(
     )
 
 
-@router.put(
-    "/telescope/{device_number}/slewtotargetasync", response_model=AlpacaResponse
-)
-def slewtotargetasync(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)
-):
+@router.put("/telescope/{device_number}/slewtotargetasync", response_model=AlpacaResponse)
+def slewtotargetasync(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
 
@@ -1490,7 +1364,7 @@ def synctoaltaz(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
+    # state = get_device_state("telescope", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -1501,9 +1375,7 @@ def synctoaltaz(
     if Azimuth < 0.0 or Azimuth >= 360.0:
         raise AlpacaError(0x402, "Azimuth must be between 0 and 360 degrees")
 
-    update_device_state(
-        "telescope", device_number, {"azimuth": Azimuth, "altitude": Altitude}
-    )
+    update_device_state("telescope", device_number, {"azimuth": Azimuth, "altitude": Altitude})
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -1511,9 +1383,7 @@ def synctoaltaz(
     )
 
 
-@router.put(
-    "/telescope/{device_number}/synctocoordinates", response_model=AlpacaResponse
-)
+@router.put("/telescope/{device_number}/synctocoordinates", response_model=AlpacaResponse)
 def synctocoordinates(
     device_number: int = Path(..., ge=0),
     RightAscension: float = Form(...),
@@ -1521,7 +1391,7 @@ def synctocoordinates(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
+    # state = get_device_state("telescope", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -1545,9 +1415,7 @@ def synctocoordinates(
 
 
 @router.put("/telescope/{device_number}/synctotarget", response_model=AlpacaResponse)
-def synctotarget(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)
-):
+def synctotarget(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
 
@@ -1575,7 +1443,7 @@ def synctotarget(
 @router.put("/telescope/{device_number}/unpark", response_model=AlpacaResponse)
 def unpark(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
+    # state = get_device_state("telescope", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
