@@ -365,7 +365,7 @@ def validate_device_exists(device_type: str, device_number: int) -> bool:
 def reload_config() -> None:
     """Reload configuration from file (useful for development)"""
     global config
-    config = CONFIG.reload().get()
+    config = CONFIG.reload()
     # Clear existing state so it will be re-initialized with new config
     global _state
     with _state_lock:

@@ -1,3 +1,7 @@
+[build-system]
+build-backend = "uv_build"
+requires = ["uv_build>=0.8.14,<0.9.0"]
+
 [project]
 authors = [
   {name = "Peter Pederson"},
@@ -13,7 +17,7 @@ dependencies = [
 ]
 description = "Python based ASCOM Alpaca simulators for Observatory Control Software testing"
 keywords = ["astronomy", "astrophysics", "telescope"]
-license = {text = "MIT"}
+license = "MIT"
 name = "alpaca-simulators"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -39,3 +43,10 @@ line-length = 99
 [tool.ruff.lint]
 fixable = ["ALL"]
 select = ["E", "F", "I001", "UP"]
+
+[tool.uv.build-backend]
+data = [
+  "src/observatory_simulator/config/"
+]
+module-name = "observatory_simulator"
+source-include = ["src/observatory_simulator/config/default.yaml"]
