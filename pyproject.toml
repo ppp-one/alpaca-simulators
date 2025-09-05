@@ -1,0 +1,41 @@
+[project]
+authors = [
+  {name = "Peter Pederson"},
+  {name = "David Degen"}
+]
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "pyyaml",
+  "cabaret",
+  "jinja2",
+  "python-multipart"
+]
+description = "Python based ASCOM Alpaca simulators for Observatory Control Software testing"
+keywords = ["astronomy", "astrophysics", "telescope"]
+license = {text = "MIT"}
+name = "alpaca-simulators"
+readme = "README.md"
+requires-python = ">=3.10"
+version = "0.1.0"
+
+[project.optional-dependencies]
+dev = ["ruff", "pytest"]
+test = ["pytest"]
+
+[project.scripts]
+alpaca-simulators = "observatory_simulator.run_simulator:main"
+
+[project.urls]
+"Bug Tracker" = "https://github.com/ppp-one/alpaca-simulators/issues"
+Homepage = "https://github.com/ppp-one/alpaca-simulators"
+Source = "https://github.com/ppp-one/alpaca-simulators"
+
+[tool.ruff]
+exclude = ["*.yaml"]
+extend-include = ["*.ipynb"]
+line-length = 99
+
+[tool.ruff.lint]
+fixable = ["ALL"]
+select = ["E", "F", "I001", "UP"]

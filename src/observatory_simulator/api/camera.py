@@ -1,27 +1,28 @@
 import asyncio
-import time
 from datetime import datetime, timezone
-from fastapi import APIRouter, Path, Body, BackgroundTasks, Query, Form
-from fastapi.responses import StreamingResponse
-from observatory_simulator.state import (
-    get_device_state,
-    update_device_state,
-    get_device_config,
-    get_server_transaction_id,
-    BoolResponse,
-    IntResponse,
-    DoubleResponse,
-    StringResponse,
-    StringArrayResponse,
-    ImageArrayResponse,
-    AlpacaResponse,
-    CameraStates,
-    SensorTypes,
-    GuideDirections,
-)
-from observatory_simulator.api.common import AlpacaError, validate_device
+
 import cabaret
 import numpy as np
+from fastapi import APIRouter, BackgroundTasks, Form, Path, Query
+from fastapi.responses import StreamingResponse
+
+from observatory_simulator.api.common import AlpacaError, validate_device
+from observatory_simulator.state import (
+    AlpacaResponse,
+    BoolResponse,
+    CameraStates,
+    DoubleResponse,
+    GuideDirections,
+    ImageArrayResponse,
+    IntResponse,
+    SensorTypes,
+    StringArrayResponse,
+    StringResponse,
+    get_device_config,
+    get_device_state,
+    get_server_transaction_id,
+    update_device_state,
+)
 
 router = APIRouter()
 
@@ -33,17 +34,17 @@ def make_cache_key(ra, dec, duration, light, focus):
 
 
 async def bytes_generator(image_array, numx, numy):
-    b = int(1).to_bytes(4, "little")  # metaversion
-    b += int(0).to_bytes(4, "little")  # error
-    b += int(0).to_bytes(4, "little")  # clientid
-    b += int(0).to_bytes(4, "little")  # deviceid
-    b += int(44).to_bytes(4, "little")  # DataStart
-    b += int(2).to_bytes(4, "little")  # ImageElementType
-    b += int(8).to_bytes(4, "little")  # TransmissionElementType
-    b += int(2).to_bytes(4, "little")  # Rank
+    b = (1).to_bytes(4, "little")  # metaversion
+    b += (0).to_bytes(4, "little")  # error
+    b += (0).to_bytes(4, "little")  # clientid
+    b += (0).to_bytes(4, "little")  # deviceid
+    b += (44).to_bytes(4, "little")  # DataStart
+    b += (2).to_bytes(4, "little")  # ImageElementType
+    b += (8).to_bytes(4, "little")  # TransmissionElementType
+    b += (2).to_bytes(4, "little")  # Rank
     b += int(numx).to_bytes(4, "little")  # Dimension1
     b += int(numy).to_bytes(4, "little")  # Dimension2
-    b += int(0).to_bytes(4, "little")  # Dimension3
+    b += (0).to_bytes(4, "little")  # Dimension3
 
     b += image_array.T.tobytes()
 
@@ -75,9 +76,7 @@ async def exposure_task(device_number: int, duration: float, light: bool):
             update_device_state("camera", device_number, {"percentcompleted": progress})
 
         # Update to reading state
-        update_device_state(
-            "camera", device_number, {"camera_state": CameraStates.READING}
-        )
+        update_device_state("camera", device_number, {"camera_state": CameraStates.READING})
         await asyncio.sleep(0.01)  # Simulate readout time
 
         # Generate image using cabaret
@@ -111,8 +110,7 @@ async def exposure_task(device_number: int, duration: float, light: bool):
             gain=cam_state.get("gain", 1.0),
             well_depth=cam_state.get("fullwellcapacity", 2**16),
             dark_current=0.2
-            * 2
-            ** ((cam_state.get("ccdtemperature", -60) - (-10)) / 6),  # doubles every 6C
+            * 2 ** ((cam_state.get("ccdtemperature", -60) - (-10)) / 6),  # doubles every 6C
         )
         cabaret_site = cabaret.Site(
             sky_background=150,  # make function of time day?
@@ -175,9 +173,7 @@ async def exposure_task(device_number: int, duration: float, light: bool):
 
 # Camera-specific endpoints
 @router.get("/camera/{device_number}/camerastate", response_model=IntResponse)
-def get_camerastate(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_camerastate(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     state = get_device_state("camera", device_number)
     return IntResponse(
@@ -188,9 +184,7 @@ def get_camerastate(
 
 
 @router.get("/camera/{device_number}/imageready", response_model=BoolResponse)
-def get_imageready(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_imageready(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     state = get_device_state("camera", device_number)
     return BoolResponse(
@@ -201,9 +195,7 @@ def get_imageready(
 
 
 @router.get("/camera/{device_number}/imagearray", response_model=ImageArrayResponse)
-def get_imagearray(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_imagearray(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     state = get_device_state("camera", device_number)
 
@@ -278,11 +270,9 @@ def start_exposure(
 
 
 @router.put("/camera/{device_number}/abortexposure", response_model=AlpacaResponse)
-def abort_exposure(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)
-):
+def abort_exposure(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("camera", device_number)
-    state = get_device_state("camera", device_number)
+    # state = get_device_state("camera", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -310,9 +300,7 @@ def abort_exposure(
 
 
 @router.put("/camera/{device_number}/stopexposure", response_model=AlpacaResponse)
-def stop_exposure(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)
-):
+def stop_exposure(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("camera", device_number)
     state = get_device_state("camera", device_number)
 
@@ -325,9 +313,7 @@ def stop_exposure(
 
     # If exposing, transition to reading state
     if state["camera_state"] == CameraStates.EXPOSING:
-        update_device_state(
-            "camera", device_number, {"camera_state": CameraStates.READING}
-        )
+        update_device_state("camera", device_number, {"camera_state": CameraStates.READING})
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -337,9 +323,7 @@ def stop_exposure(
 
 # Camera properties
 @router.get("/camera/{device_number}/cameraxsize", response_model=IntResponse)
-def get_cameraxsize(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_cameraxsize(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return IntResponse(
@@ -350,9 +334,7 @@ def get_cameraxsize(
 
 
 @router.get("/camera/{device_number}/cameraysize", response_model=IntResponse)
-def get_cameraysize(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_cameraysize(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return IntResponse(
@@ -363,9 +345,7 @@ def get_cameraysize(
 
 
 @router.get("/camera/{device_number}/pixelsizex", response_model=DoubleResponse)
-def get_pixelsizex(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_pixelsizex(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return DoubleResponse(
@@ -376,9 +356,7 @@ def get_pixelsizex(
 
 
 @router.get("/camera/{device_number}/pixelsizey", response_model=DoubleResponse)
-def get_pixelsizey(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_pixelsizey(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return DoubleResponse(
@@ -389,9 +367,7 @@ def get_pixelsizey(
 
 
 @router.get("/camera/{device_number}/maxbinx", response_model=IntResponse)
-def get_maxbinx(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_maxbinx(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return IntResponse(
@@ -402,9 +378,7 @@ def get_maxbinx(
 
 
 @router.get("/camera/{device_number}/maxbiny", response_model=IntResponse)
-def get_maxbiny(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_maxbiny(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return IntResponse(
@@ -473,9 +447,7 @@ def set_biny(
 
 # Readout modes
 @router.get("/camera/{device_number}/readoutmodes", response_model=StringArrayResponse)
-def get_readoutmodes(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_readoutmodes(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return StringArrayResponse(
@@ -486,9 +458,7 @@ def get_readoutmodes(
 
 
 @router.get("/camera/{device_number}/readoutmode", response_model=IntResponse)
-def get_readoutmode(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_readoutmode(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     state = get_device_state("camera", device_number)
     return IntResponse(
@@ -532,9 +502,7 @@ def get_percentcompleted(
 
 # Bayer pattern support
 @router.get("/camera/{device_number}/bayeroffsetx", response_model=IntResponse)
-def get_bayeroffsetx(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_bayeroffsetx(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return IntResponse(
@@ -545,9 +513,7 @@ def get_bayeroffsetx(
 
 
 @router.get("/camera/{device_number}/bayeroffsety", response_model=IntResponse)
-def get_bayeroffsety(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_bayeroffsety(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return IntResponse(
@@ -585,9 +551,7 @@ def get_canasymmetricbin(
 
 
 @router.get("/camera/{device_number}/canfastreadout", response_model=BoolResponse)
-def get_canfastreadout(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_canfastreadout(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return BoolResponse(
@@ -611,9 +575,7 @@ def get_cangetcoolerpower(
 
 
 @router.get("/camera/{device_number}/canpulseguide", response_model=BoolResponse)
-def get_canpulseguide(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_canpulseguide(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return BoolResponse(
@@ -637,9 +599,7 @@ def get_cansetccdtemperature(
 
 
 @router.get("/camera/{device_number}/canstopexposure", response_model=BoolResponse)
-def get_canstopexposure(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_canstopexposure(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return BoolResponse(
@@ -651,9 +611,7 @@ def get_canstopexposure(
 
 # Exposure limits and properties
 @router.get("/camera/{device_number}/exposuremax", response_model=DoubleResponse)
-def get_exposuremax(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_exposuremax(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return DoubleResponse(
@@ -664,9 +622,7 @@ def get_exposuremax(
 
 
 @router.get("/camera/{device_number}/exposuremin", response_model=DoubleResponse)
-def get_exposuremin(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_exposuremin(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return DoubleResponse(
@@ -689,9 +645,7 @@ def get_exposureresolution(
     )
 
 
-@router.get(
-    "/camera/{device_number}/lastexposureduration", response_model=DoubleResponse
-)
+@router.get("/camera/{device_number}/lastexposureduration", response_model=DoubleResponse)
 def get_lastexposureduration(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):
@@ -704,9 +658,7 @@ def get_lastexposureduration(
     )
 
 
-@router.get(
-    "/camera/{device_number}/lastexposurestarttime", response_model=StringResponse
-)
+@router.get("/camera/{device_number}/lastexposurestarttime", response_model=StringResponse)
 def get_lastexposurestarttime(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):
@@ -721,9 +673,7 @@ def get_lastexposurestarttime(
 
 # Camera sensor properties
 @router.get("/camera/{device_number}/electronsperadu", response_model=DoubleResponse)
-def get_electronsperadu(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_electronsperadu(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return DoubleResponse(
@@ -747,9 +697,7 @@ def get_fullwellcapacity(
 
 
 @router.get("/camera/{device_number}/hasshutter", response_model=BoolResponse)
-def get_hasshutter(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_hasshutter(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return BoolResponse(
@@ -760,9 +708,7 @@ def get_hasshutter(
 
 
 @router.get("/camera/{device_number}/maxadu", response_model=IntResponse)
-def get_maxadu(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_maxadu(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return IntResponse(
@@ -773,9 +719,7 @@ def get_maxadu(
 
 
 @router.get("/camera/{device_number}/sensorname", response_model=StringResponse)
-def get_sensorname(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_sensorname(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return StringResponse(
@@ -786,9 +730,7 @@ def get_sensorname(
 
 
 @router.get("/camera/{device_number}/sensortype", response_model=IntResponse)
-def get_sensortype(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_sensortype(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return IntResponse(
@@ -800,9 +742,7 @@ def get_sensortype(
 
 # Temperature control
 @router.get("/camera/{device_number}/ccdtemperature", response_model=DoubleResponse)
-def get_ccdtemperature(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_ccdtemperature(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     state = get_device_state("camera", device_number)
     return DoubleResponse(
@@ -832,7 +772,7 @@ def set_ccdtemperature(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("camera", device_number)
-    state = get_device_state("camera", device_number)
+    # state = get_device_state("camera", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -841,9 +781,7 @@ def set_ccdtemperature(
     if not config.get("cansetccdtemperature", True):
         raise AlpacaError(0x401, "Camera does not support temperature control")
 
-    update_device_state(
-        "camera", device_number, {"setccdtemperature": SetCCDTemperature}
-    )
+    update_device_state("camera", device_number, {"setccdtemperature": SetCCDTemperature})
 
     update_device_state("camera", device_number, {"ccdtemperature": SetCCDTemperature})
 
@@ -854,9 +792,7 @@ def set_ccdtemperature(
 
 
 @router.get("/camera/{device_number}/cooleron", response_model=BoolResponse)
-def get_cooleron(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_cooleron(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     state = get_device_state("camera", device_number)
     return BoolResponse(
@@ -873,7 +809,7 @@ def set_cooleron(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("camera", device_number)
-    state = get_device_state("camera", device_number)
+    # state = get_device_state("camera", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -891,9 +827,7 @@ def set_cooleron(
 
 
 @router.get("/camera/{device_number}/coolerpower", response_model=DoubleResponse)
-def get_coolerpower(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_coolerpower(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     state = get_device_state("camera", device_number)
     return DoubleResponse(
@@ -922,7 +856,7 @@ def set_gain(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("camera", device_number)
-    state = get_device_state("camera", device_number)
+    # state = get_device_state("camera", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -943,9 +877,7 @@ def set_gain(
 
 
 @router.get("/camera/{device_number}/gainmax", response_model=DoubleResponse)
-def get_gainmax(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_gainmax(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return DoubleResponse(
@@ -956,9 +888,7 @@ def get_gainmax(
 
 
 @router.get("/camera/{device_number}/gainmin", response_model=DoubleResponse)
-def get_gainmin(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_gainmin(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return DoubleResponse(
@@ -969,9 +899,7 @@ def get_gainmin(
 
 
 @router.get("/camera/{device_number}/gains", response_model=StringArrayResponse)
-def get_gains(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_gains(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return StringArrayResponse(
@@ -983,9 +911,7 @@ def get_gains(
 
 # Offset control
 @router.get("/camera/{device_number}/offset", response_model=DoubleResponse)
-def get_offset(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_offset(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     state = get_device_state("camera", device_number)
     return DoubleResponse(
@@ -1002,7 +928,7 @@ def set_offset(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("camera", device_number)
-    state = get_device_state("camera", device_number)
+    # state = get_device_state("camera", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -1023,9 +949,7 @@ def set_offset(
 
 
 @router.get("/camera/{device_number}/offsetmax", response_model=DoubleResponse)
-def get_offsetmax(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_offsetmax(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return DoubleResponse(
@@ -1036,9 +960,7 @@ def get_offsetmax(
 
 
 @router.get("/camera/{device_number}/offsetmin", response_model=DoubleResponse)
-def get_offsetmin(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_offsetmin(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return DoubleResponse(
@@ -1049,9 +971,7 @@ def get_offsetmin(
 
 
 @router.get("/camera/{device_number}/offsets", response_model=StringArrayResponse)
-def get_offsets(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_offsets(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     config = get_device_config("camera", device_number)
     return StringArrayResponse(
@@ -1141,9 +1061,7 @@ def set_numy(
 
 
 @router.get("/camera/{device_number}/startx", response_model=IntResponse)
-def get_startx(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_startx(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     state = get_device_state("camera", device_number)
     return IntResponse(
@@ -1181,9 +1099,7 @@ def set_startx(
 
 
 @router.get("/camera/{device_number}/starty", response_model=IntResponse)
-def get_starty(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_starty(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     state = get_device_state("camera", device_number)
     return IntResponse(
@@ -1222,9 +1138,7 @@ def set_starty(
 
 # Fast readout mode
 @router.get("/camera/{device_number}/fastreadout", response_model=BoolResponse)
-def get_fastreadout(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_fastreadout(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     state = get_device_state("camera", device_number)
     return BoolResponse(
@@ -1241,7 +1155,7 @@ def set_fastreadout(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("camera", device_number)
-    state = get_device_state("camera", device_number)
+    # state = get_device_state("camera", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -1259,9 +1173,7 @@ def set_fastreadout(
 
 
 # Heat sink temperature
-@router.get(
-    "/camera/{device_number}/heatsinktemperature", response_model=DoubleResponse
-)
+@router.get("/camera/{device_number}/heatsinktemperature", response_model=DoubleResponse)
 def get_heatsinktemperature(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):
@@ -1278,9 +1190,7 @@ def get_heatsinktemperature(
 
 # Pulse guiding
 @router.get("/camera/{device_number}/ispulseguiding", response_model=BoolResponse)
-def get_ispulseguiding(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_ispulseguiding(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     state = get_device_state("camera", device_number)
     return BoolResponse(
@@ -1298,7 +1208,7 @@ def pulseguide(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("camera", device_number)
-    state = get_device_state("camera", device_number)
+    # state = get_device_state("camera", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -1332,9 +1242,7 @@ def pulseguide(
 
 
 # Sub-exposure duration
-@router.get(
-    "/camera/{device_number}/subexposureduration", response_model=DoubleResponse
-)
+@router.get("/camera/{device_number}/subexposureduration", response_model=DoubleResponse)
 def get_subexposureduration(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):
@@ -1347,16 +1255,14 @@ def get_subexposureduration(
     )
 
 
-@router.put(
-    "/camera/{device_number}/subexposureduration", response_model=AlpacaResponse
-)
+@router.put("/camera/{device_number}/subexposureduration", response_model=AlpacaResponse)
 def set_subexposureduration(
     device_number: int = Path(..., ge=0),
     SubExposureDuration: float = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("camera", device_number)
-    state = get_device_state("camera", device_number)
+    # state = get_device_state("camera", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -1364,9 +1270,7 @@ def set_subexposureduration(
     if SubExposureDuration <= 0:
         raise AlpacaError(0x402, "Sub-exposure duration must be positive")
 
-    update_device_state(
-        "camera", device_number, {"subexposureduration": SubExposureDuration}
-    )
+    update_device_state("camera", device_number, {"subexposureduration": SubExposureDuration})
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -1375,9 +1279,7 @@ def set_subexposureduration(
 
 
 # Deprecated endpoint for compatibility
-@router.get(
-    "/camera/{device_number}/imagearrayvariant", response_model=ImageArrayResponse
-)
+@router.get("/camera/{device_number}/imagearrayvariant", response_model=ImageArrayResponse)
 def get_imagearrayvariant(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):

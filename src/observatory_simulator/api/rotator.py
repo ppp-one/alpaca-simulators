@@ -1,22 +1,21 @@
-from fastapi import APIRouter, Path, Query, Form
+from fastapi import APIRouter, Form, Path, Query
+
+from observatory_simulator.api.common import AlpacaError, validate_device
 from observatory_simulator.state import (
-    get_device_state,
-    update_device_state,
-    get_device_config,
-    get_server_transaction_id,
+    AlpacaResponse,
     BoolResponse,
     DoubleResponse,
-    AlpacaResponse,
+    get_device_config,
+    get_device_state,
+    get_server_transaction_id,
+    update_device_state,
 )
-from observatory_simulator.api.common import validate_device, AlpacaError
 
 router = APIRouter()
 
 
 @router.get("/rotator/{device_number}/canreverse", response_model=BoolResponse)
-def get_canreverse(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_canreverse(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("rotator", device_number)
     config = get_device_config("rotator", device_number)
     return BoolResponse(
@@ -27,9 +26,7 @@ def get_canreverse(
 
 
 @router.get("/rotator/{device_number}/ismoving", response_model=BoolResponse)
-def get_ismoving(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_ismoving(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("rotator", device_number)
     state = get_device_state("rotator", device_number)
     return BoolResponse(
@@ -39,9 +36,7 @@ def get_ismoving(
     )
 
 
-@router.get(
-    "/rotator/{device_number}/mechanicalposition", response_model=DoubleResponse
-)
+@router.get("/rotator/{device_number}/mechanicalposition", response_model=DoubleResponse)
 def get_mechanicalposition(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):
@@ -55,9 +50,7 @@ def get_mechanicalposition(
 
 
 @router.get("/rotator/{device_number}/position", response_model=DoubleResponse)
-def get_position(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_position(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("rotator", device_number)
     state = get_device_state("rotator", device_number)
     return DoubleResponse(
@@ -68,9 +61,7 @@ def get_position(
 
 
 @router.get("/rotator/{device_number}/reverse", response_model=BoolResponse)
-def get_reverse(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_reverse(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("rotator", device_number)
     state = get_device_state("rotator", device_number)
     return BoolResponse(
@@ -87,7 +78,7 @@ def set_reverse(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("rotator", device_number)
-    state = get_device_state("rotator", device_number)
+    # state = get_device_state("rotator", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -105,9 +96,7 @@ def set_reverse(
 
 
 @router.get("/rotator/{device_number}/stepsize", response_model=DoubleResponse)
-def get_stepsize(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_stepsize(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("rotator", device_number)
     config = get_device_config("rotator", device_number)
     return DoubleResponse(
@@ -118,9 +107,7 @@ def get_stepsize(
 
 
 @router.get("/rotator/{device_number}/targetposition", response_model=DoubleResponse)
-def get_targetposition(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_targetposition(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("rotator", device_number)
     state = get_device_state("rotator", device_number)
     return DoubleResponse(
@@ -133,7 +120,7 @@ def get_targetposition(
 @router.put("/rotator/{device_number}/halt", response_model=AlpacaResponse)
 def halt(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("rotator", device_number)
-    state = get_device_state("rotator", device_number)
+    # state = get_device_state("rotator", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -188,7 +175,7 @@ def moveabsolute(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("rotator", device_number)
-    state = get_device_state("rotator", device_number)
+    # state = get_device_state("rotator", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -220,7 +207,7 @@ def movemechanical(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("rotator", device_number)
-    state = get_device_state("rotator", device_number)
+    # state = get_device_state("rotator", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -252,7 +239,7 @@ def sync(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("rotator", device_number)
-    state = get_device_state("rotator", device_number)
+    # state = get_device_state("rotator", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")

@@ -1,24 +1,23 @@
-from fastapi import APIRouter, Path, Query, Form
+from fastapi import APIRouter, Form, Path, Query
+
+from observatory_simulator.api.common import AlpacaError, validate_device
 from observatory_simulator.state import (
-    get_device_state,
-    update_device_state,
-    get_device_config,
-    get_server_transaction_id,
-    BoolResponse,
-    IntResponse,
-    DoubleResponse,
     AlpacaResponse,
+    BoolResponse,
+    DoubleResponse,
+    IntResponse,
     ShutterState,
+    get_device_config,
+    get_device_state,
+    get_server_transaction_id,
+    update_device_state,
 )
-from observatory_simulator.api.common import validate_device, AlpacaError
 
 router = APIRouter()
 
 
 @router.get("/dome/{device_number}/altitude", response_model=DoubleResponse)
-def get_altitude(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_altitude(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("dome", device_number)
     state = get_device_state("dome", device_number)
     # if not state.get("connected"):
@@ -31,9 +30,7 @@ def get_altitude(
 
 
 @router.get("/dome/{device_number}/athome", response_model=BoolResponse)
-def get_athome(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_athome(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("dome", device_number)
     state = get_device_state("dome", device_number)
     return BoolResponse(
@@ -44,9 +41,7 @@ def get_athome(
 
 
 @router.get("/dome/{device_number}/atpark", response_model=BoolResponse)
-def get_atpark(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_atpark(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("dome", device_number)
     state = get_device_state("dome", device_number)
     return BoolResponse(
@@ -57,9 +52,7 @@ def get_atpark(
 
 
 @router.get("/dome/{device_number}/azimuth", response_model=DoubleResponse)
-def get_azimuth(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_azimuth(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("dome", device_number)
     state = get_device_state("dome", device_number)
     # if not state.get("connected"):
@@ -72,9 +65,7 @@ def get_azimuth(
 
 
 @router.get("/dome/{device_number}/canfindhome", response_model=BoolResponse)
-def get_canfindhome(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_canfindhome(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("dome", device_number)
     config = get_device_config("dome", device_number)
     return BoolResponse(
@@ -85,9 +76,7 @@ def get_canfindhome(
 
 
 @router.get("/dome/{device_number}/canpark", response_model=BoolResponse)
-def get_canpark(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_canpark(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("dome", device_number)
     config = get_device_config("dome", device_number)
     return BoolResponse(
@@ -98,9 +87,7 @@ def get_canpark(
 
 
 @router.get("/dome/{device_number}/cansetaltitude", response_model=BoolResponse)
-def get_cansetaltitude(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_cansetaltitude(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("dome", device_number)
     config = get_device_config("dome", device_number)
     return BoolResponse(
@@ -111,9 +98,7 @@ def get_cansetaltitude(
 
 
 @router.get("/dome/{device_number}/cansetazimuth", response_model=BoolResponse)
-def get_cansetazimuth(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_cansetazimuth(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("dome", device_number)
     config = get_device_config("dome", device_number)
     return BoolResponse(
@@ -124,9 +109,7 @@ def get_cansetazimuth(
 
 
 @router.get("/dome/{device_number}/cansetpark", response_model=BoolResponse)
-def get_cansetpark(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_cansetpark(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("dome", device_number)
     config = get_device_config("dome", device_number)
     return BoolResponse(
@@ -137,9 +120,7 @@ def get_cansetpark(
 
 
 @router.get("/dome/{device_number}/cansetshutter", response_model=BoolResponse)
-def get_cansetshutter(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_cansetshutter(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("dome", device_number)
     config = get_device_config("dome", device_number)
     return BoolResponse(
@@ -150,9 +131,7 @@ def get_cansetshutter(
 
 
 @router.get("/dome/{device_number}/canslave", response_model=BoolResponse)
-def get_canslave(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_canslave(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("dome", device_number)
     config = get_device_config("dome", device_number)
     return BoolResponse(
@@ -163,9 +142,7 @@ def get_canslave(
 
 
 @router.get("/dome/{device_number}/cansyncazimuth", response_model=BoolResponse)
-def get_cansyncazimuth(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_cansyncazimuth(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("dome", device_number)
     config = get_device_config("dome", device_number)
     return BoolResponse(
@@ -176,9 +153,7 @@ def get_cansyncazimuth(
 
 
 @router.get("/dome/{device_number}/shutterstatus", response_model=IntResponse)
-def get_shutterstatus(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_shutterstatus(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("dome", device_number)
     state = get_device_state("dome", device_number)
     return IntResponse(
@@ -189,9 +164,7 @@ def get_shutterstatus(
 
 
 @router.get("/dome/{device_number}/slaved", response_model=BoolResponse)
-def get_slaved(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_slaved(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("dome", device_number)
     state = get_device_state("dome", device_number)
     return BoolResponse(
@@ -208,7 +181,7 @@ def set_slaved(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("dome", device_number)
-    state = get_device_state("dome", device_number)
+    # state = get_device_state("dome", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -222,9 +195,7 @@ def set_slaved(
 
 
 @router.get("/dome/{device_number}/slewing", response_model=BoolResponse)
-def get_slewing(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_slewing(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("dome", device_number)
     state = get_device_state("dome", device_number)
     return BoolResponse(
@@ -240,7 +211,7 @@ def get_slewing(
 @router.put("/dome/{device_number}/abortslew", response_model=AlpacaResponse)
 def abortslew(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("dome", device_number)
-    state = get_device_state("dome", device_number)
+    # state = get_device_state("dome", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -254,11 +225,9 @@ def abortslew(device_number: int = Path(..., ge=0), ClientTransactionID: int = F
 
 
 @router.put("/dome/{device_number}/closeshutter", response_model=AlpacaResponse)
-def closeshutter(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)
-):
+def closeshutter(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("dome", device_number)
-    state = get_device_state("dome", device_number)
+    # state = get_device_state("dome", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -274,14 +243,12 @@ def closeshutter(
 @router.put("/dome/{device_number}/findhome", response_model=AlpacaResponse)
 def findhome(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("dome", device_number)
-    state = get_device_state("dome", device_number)
+    # state = get_device_state("dome", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
 
-    update_device_state(
-        "dome", device_number, {"athome": True, "slewing": False, "azimuth": 0.0}
-    )
+    update_device_state("dome", device_number, {"athome": True, "slewing": False, "azimuth": 0.0})
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -290,11 +257,9 @@ def findhome(device_number: int = Path(..., ge=0), ClientTransactionID: int = Fo
 
 
 @router.put("/dome/{device_number}/openshutter", response_model=AlpacaResponse)
-def openshutter(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)
-):
+def openshutter(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("dome", device_number)
-    state = get_device_state("dome", device_number)
+    # state = get_device_state("dome", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -310,7 +275,7 @@ def openshutter(
 @router.put("/dome/{device_number}/park", response_model=AlpacaResponse)
 def park(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("dome", device_number)
-    state = get_device_state("dome", device_number)
+    # state = get_device_state("dome", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -355,7 +320,7 @@ def slewtoaltitude(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("dome", device_number)
-    state = get_device_state("dome", device_number)
+    # state = get_device_state("dome", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -386,7 +351,7 @@ def slewtoazimuth(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("dome", device_number)
-    state = get_device_state("dome", device_number)
+    # state = get_device_state("dome", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -417,7 +382,7 @@ def synctoazimuth(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("dome", device_number)
-    state = get_device_state("dome", device_number)
+    # state = get_device_state("dome", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")

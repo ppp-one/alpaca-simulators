@@ -1,7 +1,8 @@
 # parse_spec.py
-import yaml
 import os
 from collections import defaultdict
+
+import yaml
 
 
 def get_device_type_from_path(path):
@@ -38,7 +39,7 @@ def analyze_api_spec(file_path="AlpacaDeviceAPI_v1.yaml", output_dir="api_docs")
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
 
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         spec = yaml.safe_load(f)
 
     if not spec.get("paths"):
@@ -72,7 +73,8 @@ def analyze_api_spec(file_path="AlpacaDeviceAPI_v1.yaml", output_dir="api_docs")
         print(f"✅ {device_type.capitalize()} endpoints written to: {output_file}")
 
     print(
-        f"\n🎉 Analysis complete! {len(endpoints_by_type)} files created in '{output_dir}' directory."
+        "\n🎉 Analysis complete! "
+        + f"{len(endpoints_by_type)} files created in '{output_dir}' directory."
     )
 
 

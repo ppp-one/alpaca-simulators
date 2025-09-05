@@ -1,24 +1,23 @@
-from fastapi import APIRouter, Path, Query, Form
+from fastapi import APIRouter, Form, Path, Query
+
+from observatory_simulator.api.common import AlpacaError, validate_device
 from observatory_simulator.state import (
-    get_device_state,
-    update_device_state,
-    get_device_config,
-    get_server_transaction_id,
-    BoolResponse,
-    IntResponse,
     AlpacaResponse,
-    CoverStatus,
+    BoolResponse,
     CalibratorStatus,
+    CoverStatus,
+    IntResponse,
+    get_device_config,
+    get_device_state,
+    get_server_transaction_id,
+    update_device_state,
 )
-from observatory_simulator.api.common import validate_device, AlpacaError
 
 router = APIRouter()
 
 
 @router.get("/covercalibrator/{device_number}/brightness", response_model=IntResponse)
-def get_brightness(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_brightness(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("covercalibrator", device_number)
     state = get_device_state("covercalibrator", device_number)
     return IntResponse(
@@ -28,9 +27,7 @@ def get_brightness(
     )
 
 
-@router.get(
-    "/covercalibrator/{device_number}/calibratorchanging", response_model=BoolResponse
-)
+@router.get("/covercalibrator/{device_number}/calibratorchanging", response_model=BoolResponse)
 def get_calibratorchanging(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):
@@ -43,12 +40,8 @@ def get_calibratorchanging(
     )
 
 
-@router.get(
-    "/covercalibrator/{device_number}/calibratorstate", response_model=IntResponse
-)
-def get_calibratorstate(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+@router.get("/covercalibrator/{device_number}/calibratorstate", response_model=IntResponse)
+def get_calibratorstate(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("covercalibrator", device_number)
     state = get_device_state("covercalibrator", device_number)
     return IntResponse(
@@ -59,9 +52,7 @@ def get_calibratorstate(
 
 
 @router.get("/covercalibrator/{device_number}/covermoving", response_model=BoolResponse)
-def get_covermoving(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_covermoving(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("covercalibrator", device_number)
     state = get_device_state("covercalibrator", device_number)
     return BoolResponse(
@@ -72,9 +63,7 @@ def get_covermoving(
 
 
 @router.get("/covercalibrator/{device_number}/coverstate", response_model=IntResponse)
-def get_coverstate(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+def get_coverstate(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("covercalibrator", device_number)
     state = get_device_state("covercalibrator", device_number)
     return IntResponse(
@@ -84,12 +73,8 @@ def get_coverstate(
     )
 
 
-@router.get(
-    "/covercalibrator/{device_number}/maxbrightness", response_model=IntResponse
-)
-def get_maxbrightness(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+@router.get("/covercalibrator/{device_number}/maxbrightness", response_model=IntResponse)
+def get_maxbrightness(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("covercalibrator", device_number)
     config = get_device_config("covercalibrator", device_number)
     return IntResponse(
@@ -99,14 +84,10 @@ def get_maxbrightness(
     )
 
 
-@router.put(
-    "/covercalibrator/{device_number}/calibratoroff", response_model=AlpacaResponse
-)
-def calibratoroff(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)
-):
+@router.put("/covercalibrator/{device_number}/calibratoroff", response_model=AlpacaResponse)
+def calibratoroff(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("covercalibrator", device_number)
-    state = get_device_state("covercalibrator", device_number)
+    # state = get_device_state("covercalibrator", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -127,16 +108,14 @@ def calibratoroff(
     )
 
 
-@router.put(
-    "/covercalibrator/{device_number}/calibratoron", response_model=AlpacaResponse
-)
+@router.put("/covercalibrator/{device_number}/calibratoron", response_model=AlpacaResponse)
 def calibratoron(
     device_number: int = Path(..., ge=0),
     Brightness: int = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("covercalibrator", device_number)
-    state = get_device_state("covercalibrator", device_number)
+    # state = get_device_state("covercalibrator", device_number)
     config = get_device_config("covercalibrator", device_number)
 
     # if not state.get("connected"):
@@ -162,14 +141,10 @@ def calibratoron(
     )
 
 
-@router.put(
-    "/covercalibrator/{device_number}/closecover", response_model=AlpacaResponse
-)
-def closecover(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)
-):
+@router.put("/covercalibrator/{device_number}/closecover", response_model=AlpacaResponse)
+def closecover(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("covercalibrator", device_number)
-    state = get_device_state("covercalibrator", device_number)
+    # state = get_device_state("covercalibrator", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -189,7 +164,7 @@ def closecover(
 @router.put("/covercalibrator/{device_number}/haltcover", response_model=AlpacaResponse)
 def haltcover(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("covercalibrator", device_number)
-    state = get_device_state("covercalibrator", device_number)
+    # state = get_device_state("covercalibrator", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -205,7 +180,7 @@ def haltcover(device_number: int = Path(..., ge=0), ClientTransactionID: int = F
 @router.put("/covercalibrator/{device_number}/opencover", response_model=AlpacaResponse)
 def opencover(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("covercalibrator", device_number)
-    state = get_device_state("covercalibrator", device_number)
+    # state = get_device_state("covercalibrator", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")

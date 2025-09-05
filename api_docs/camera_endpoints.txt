@@ -216,4 +216,3 @@ PUT     /camera/{device_number}/startexposure
 
 PUT     /camera/{device_number}/stopexposure
     Summary: Stops the current exposure
-

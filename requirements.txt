@@ -1,6 +1,0 @@
-fastapi
-uvicorn
-pyyaml
-cabaret
-jinja2
-python-multipart

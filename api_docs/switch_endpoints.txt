@@ -48,4 +48,3 @@ GET     /switch/{device_number}/statechangecomplete
 
 GET     /switch/{device_number}/switchstep
     Summary: Returns the step size that this device supports.
-

@@ -39,4 +39,3 @@ PUT     /rotator/{device_number}/movemechanical
 
 PUT     /rotator/{device_number}/sync
     Summary: Syncs the rotator to the specified position angle without moving it.
-

@@ -1,25 +1,20 @@
-from fastapi import APIRouter, Path, Query, Form
+from fastapi import APIRouter, Form, Path, Query
+
+from observatory_simulator.api.common import AlpacaError, validate_device
 from observatory_simulator.state import (
-    get_device_state,
-    update_device_state,
-    get_device_config,
-    get_server_transaction_id,
+    AlpacaResponse,
     DoubleResponse,
     StringResponse,
-    AlpacaResponse,
+    get_device_state,
+    get_server_transaction_id,
+    update_device_state,
 )
-from observatory_simulator.api.common import validate_device, AlpacaError
-import time
 
 router = APIRouter()
 
 
-@router.get(
-    "/observingconditions/{device_number}/averageperiod", response_model=DoubleResponse
-)
-def get_averageperiod(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+@router.get("/observingconditions/{device_number}/averageperiod", response_model=DoubleResponse)
+def get_averageperiod(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("observingconditions", device_number)
     state = get_device_state("observingconditions", device_number)
     return DoubleResponse(
@@ -29,16 +24,14 @@ def get_averageperiod(
     )
 
 
-@router.put(
-    "/observingconditions/{device_number}/averageperiod", response_model=AlpacaResponse
-)
+@router.put("/observingconditions/{device_number}/averageperiod", response_model=AlpacaResponse)
 def set_averageperiod(
     device_number: int = Path(..., ge=0),
     AveragePeriod: float = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("observingconditions", device_number)
-    state = get_device_state("observingconditions", device_number)
+    # state = get_device_state("observingconditions", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -46,9 +39,7 @@ def set_averageperiod(
     if AveragePeriod <= 0:
         raise AlpacaError(0x402, "Average period must be positive")
 
-    update_device_state(
-        "observingconditions", device_number, {"averageperiod": AveragePeriod}
-    )
+    update_device_state("observingconditions", device_number, {"averageperiod": AveragePeriod})
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -56,12 +47,8 @@ def set_averageperiod(
     )
 
 
-@router.get(
-    "/observingconditions/{device_number}/cloudcover", response_model=DoubleResponse
-)
-def get_cloudcover(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+@router.get("/observingconditions/{device_number}/cloudcover", response_model=DoubleResponse)
+def get_cloudcover(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("observingconditions", device_number)
     state = get_device_state("observingconditions", device_number)
     return DoubleResponse(
@@ -71,16 +58,14 @@ def get_cloudcover(
     )
 
 
-@router.put(
-    "/observingconditions/{device_number}/cloudcover", response_model=AlpacaResponse
-)
+@router.put("/observingconditions/{device_number}/cloudcover", response_model=AlpacaResponse)
 def set_cloudcover(
     device_number: int = Path(..., ge=0),
     CloudCover: float = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("observingconditions", device_number)
-    state = get_device_state("observingconditions", device_number)
+    # state = get_device_state("observingconditions", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -88,9 +73,7 @@ def set_cloudcover(
     if CloudCover < 0.0 or CloudCover > 1.0:
         raise AlpacaError(0x402, "Cloud cover must be between 0.0 and 1.0")
 
-    update_device_state(
-        "observingconditions", device_number, {"cloudcover": CloudCover}
-    )
+    update_device_state("observingconditions", device_number, {"cloudcover": CloudCover})
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -98,12 +81,8 @@ def set_cloudcover(
     )
 
 
-@router.get(
-    "/observingconditions/{device_number}/dewpoint", response_model=DoubleResponse
-)
-def get_dewpoint(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+@router.get("/observingconditions/{device_number}/dewpoint", response_model=DoubleResponse)
+def get_dewpoint(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("observingconditions", device_number)
     state = get_device_state("observingconditions", device_number)
     return DoubleResponse(
@@ -113,16 +92,14 @@ def get_dewpoint(
     )
 
 
-@router.put(
-    "/observingconditions/{device_number}/dewpoint", response_model=AlpacaResponse
-)
+@router.put("/observingconditions/{device_number}/dewpoint", response_model=AlpacaResponse)
 def set_dewpoint(
     device_number: int = Path(..., ge=0),
     DewPoint: float = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("observingconditions", device_number)
-    state = get_device_state("observingconditions", device_number)
+    # state = get_device_state("observingconditions", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -138,12 +115,8 @@ def set_dewpoint(
     )
 
 
-@router.get(
-    "/observingconditions/{device_number}/humidity", response_model=DoubleResponse
-)
-def get_humidity(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+@router.get("/observingconditions/{device_number}/humidity", response_model=DoubleResponse)
+def get_humidity(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("observingconditions", device_number)
     state = get_device_state("observingconditions", device_number)
     return DoubleResponse(
@@ -153,16 +126,14 @@ def get_humidity(
     )
 
 
-@router.put(
-    "/observingconditions/{device_number}/humidity", response_model=AlpacaResponse
-)
+@router.put("/observingconditions/{device_number}/humidity", response_model=AlpacaResponse)
 def set_humidity(
     device_number: int = Path(..., ge=0),
     Humidity: float = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("observingconditions", device_number)
-    state = get_device_state("observingconditions", device_number)
+    # state = get_device_state("observingconditions", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -178,12 +149,8 @@ def set_humidity(
     )
 
 
-@router.get(
-    "/observingconditions/{device_number}/pressure", response_model=DoubleResponse
-)
-def get_pressure(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+@router.get("/observingconditions/{device_number}/pressure", response_model=DoubleResponse)
+def get_pressure(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("observingconditions", device_number)
     state = get_device_state("observingconditions", device_number)
     return DoubleResponse(
@@ -193,16 +160,14 @@ def get_pressure(
     )
 
 
-@router.put(
-    "/observingconditions/{device_number}/pressure", response_model=AlpacaResponse
-)
+@router.put("/observingconditions/{device_number}/pressure", response_model=AlpacaResponse)
 def set_pressure(
     device_number: int = Path(..., ge=0),
     Pressure: float = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("observingconditions", device_number)
-    state = get_device_state("observingconditions", device_number)
+    # state = get_device_state("observingconditions", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -218,12 +183,8 @@ def set_pressure(
     )
 
 
-@router.get(
-    "/observingconditions/{device_number}/rainrate", response_model=DoubleResponse
-)
-def get_rainrate(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+@router.get("/observingconditions/{device_number}/rainrate", response_model=DoubleResponse)
+def get_rainrate(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("observingconditions", device_number)
     state = get_device_state("observingconditions", device_number)
     return DoubleResponse(
@@ -233,16 +194,14 @@ def get_rainrate(
     )
 
 
-@router.put(
-    "/observingconditions/{device_number}/rainrate", response_model=AlpacaResponse
-)
+@router.put("/observingconditions/{device_number}/rainrate", response_model=AlpacaResponse)
 def set_rainrate(
     device_number: int = Path(..., ge=0),
     RainRate: float = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("observingconditions", device_number)
-    state = get_device_state("observingconditions", device_number)
+    # state = get_device_state("observingconditions", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -258,12 +217,8 @@ def set_rainrate(
     )
 
 
-@router.get(
-    "/observingconditions/{device_number}/skybrightness", response_model=DoubleResponse
-)
-def get_skybrightness(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+@router.get("/observingconditions/{device_number}/skybrightness", response_model=DoubleResponse)
+def get_skybrightness(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("observingconditions", device_number)
     state = get_device_state("observingconditions", device_number)
     return DoubleResponse(
@@ -273,16 +228,14 @@ def get_skybrightness(
     )
 
 
-@router.put(
-    "/observingconditions/{device_number}/skybrightness", response_model=AlpacaResponse
-)
+@router.put("/observingconditions/{device_number}/skybrightness", response_model=AlpacaResponse)
 def set_skybrightness(
     device_number: int = Path(..., ge=0),
     SkyBrightness: float = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("observingconditions", device_number)
-    state = get_device_state("observingconditions", device_number)
+    # state = get_device_state("observingconditions", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -292,9 +245,7 @@ def set_skybrightness(
     #         0x402, "Sky brightness must be between 10.0 and 25.0 mag/arcsec²"
     #     )
 
-    update_device_state(
-        "observingconditions", device_number, {"skybrightness": SkyBrightness}
-    )
+    update_device_state("observingconditions", device_number, {"skybrightness": SkyBrightness})
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -302,12 +253,8 @@ def set_skybrightness(
     )
 
 
-@router.get(
-    "/observingconditions/{device_number}/skyquality", response_model=DoubleResponse
-)
-def get_skyquality(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+@router.get("/observingconditions/{device_number}/skyquality", response_model=DoubleResponse)
+def get_skyquality(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("observingconditions", device_number)
     state = get_device_state("observingconditions", device_number)
     return DoubleResponse(
@@ -317,28 +264,22 @@ def get_skyquality(
     )
 
 
-@router.put(
-    "/observingconditions/{device_number}/skyquality", response_model=AlpacaResponse
-)
+@router.put("/observingconditions/{device_number}/skyquality", response_model=AlpacaResponse)
 def set_skyquality(
     device_number: int = Path(..., ge=0),
     SkyQuality: float = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("observingconditions", device_number)
-    state = get_device_state("observingconditions", device_number)
+    # state = get_device_state("observingconditions", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
 
     if SkyQuality < 15.0 or SkyQuality > 25.0:
-        raise AlpacaError(
-            0x402, "Sky quality must be between 15.0 and 25.0 mag/arcsec²"
-        )
+        raise AlpacaError(0x402, "Sky quality must be between 15.0 and 25.0 mag/arcsec²")
 
-    update_device_state(
-        "observingconditions", device_number, {"skyquality": SkyQuality}
-    )
+    update_device_state("observingconditions", device_number, {"skyquality": SkyQuality})
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -346,12 +287,8 @@ def set_skyquality(
     )
 
 
-@router.get(
-    "/observingconditions/{device_number}/skytemperature", response_model=DoubleResponse
-)
-def get_skytemperature(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+@router.get("/observingconditions/{device_number}/skytemperature", response_model=DoubleResponse)
+def get_skytemperature(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("observingconditions", device_number)
     state = get_device_state("observingconditions", device_number)
     return DoubleResponse(
@@ -361,23 +298,19 @@ def get_skytemperature(
     )
 
 
-@router.put(
-    "/observingconditions/{device_number}/skytemperature", response_model=AlpacaResponse
-)
+@router.put("/observingconditions/{device_number}/skytemperature", response_model=AlpacaResponse)
 def set_skytemperature(
     device_number: int = Path(..., ge=0),
     SkyTemperature: float = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("observingconditions", device_number)
-    state = get_device_state("observingconditions", device_number)
+    # state = get_device_state("observingconditions", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
 
-    update_device_state(
-        "observingconditions", device_number, {"skytemperature": SkyTemperature}
-    )
+    update_device_state("observingconditions", device_number, {"skytemperature": SkyTemperature})
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -385,12 +318,8 @@ def set_skytemperature(
     )
 
 
-@router.get(
-    "/observingconditions/{device_number}/starfwhm", response_model=DoubleResponse
-)
-def get_starfwhm(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+@router.get("/observingconditions/{device_number}/starfwhm", response_model=DoubleResponse)
+def get_starfwhm(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("observingconditions", device_number)
     state = get_device_state("observingconditions", device_number)
     return DoubleResponse(
@@ -400,16 +329,14 @@ def get_starfwhm(
     )
 
 
-@router.put(
-    "/observingconditions/{device_number}/starfwhm", response_model=AlpacaResponse
-)
+@router.put("/observingconditions/{device_number}/starfwhm", response_model=AlpacaResponse)
 def set_starfwhm(
     device_number: int = Path(..., ge=0),
     StarFWHM: float = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("observingconditions", device_number)
-    state = get_device_state("observingconditions", device_number)
+    # state = get_device_state("observingconditions", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -425,12 +352,8 @@ def set_starfwhm(
     )
 
 
-@router.get(
-    "/observingconditions/{device_number}/temperature", response_model=DoubleResponse
-)
-def get_temperature(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+@router.get("/observingconditions/{device_number}/temperature", response_model=DoubleResponse)
+def get_temperature(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("observingconditions", device_number)
     state = get_device_state("observingconditions", device_number)
     return DoubleResponse(
@@ -440,16 +363,14 @@ def get_temperature(
     )
 
 
-@router.put(
-    "/observingconditions/{device_number}/temperature", response_model=AlpacaResponse
-)
+@router.put("/observingconditions/{device_number}/temperature", response_model=AlpacaResponse)
 def set_temperature(
     device_number: int = Path(..., ge=0),
     Temperature: float = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("observingconditions", device_number)
-    state = get_device_state("observingconditions", device_number)
+    # state = get_device_state("observingconditions", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -457,9 +378,7 @@ def set_temperature(
     if Temperature < -50.0 or Temperature > 50.0:
         raise AlpacaError(0x402, "Temperature must be between -50.0°C and 50.0°C")
 
-    update_device_state(
-        "observingconditions", device_number, {"temperature": Temperature}
-    )
+    update_device_state("observingconditions", device_number, {"temperature": Temperature})
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -467,12 +386,8 @@ def set_temperature(
     )
 
 
-@router.get(
-    "/observingconditions/{device_number}/winddirection", response_model=DoubleResponse
-)
-def get_winddirection(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+@router.get("/observingconditions/{device_number}/winddirection", response_model=DoubleResponse)
+def get_winddirection(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("observingconditions", device_number)
     state = get_device_state("observingconditions", device_number)
     return DoubleResponse(
@@ -482,16 +397,14 @@ def get_winddirection(
     )
 
 
-@router.put(
-    "/observingconditions/{device_number}/winddirection", response_model=AlpacaResponse
-)
+@router.put("/observingconditions/{device_number}/winddirection", response_model=AlpacaResponse)
 def set_winddirection(
     device_number: int = Path(..., ge=0),
     WindDirection: float = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("observingconditions", device_number)
-    state = get_device_state("observingconditions", device_number)
+    # state = get_device_state("observingconditions", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -499,9 +412,7 @@ def set_winddirection(
     if WindDirection < 0.0 or WindDirection >= 360.0:
         raise AlpacaError(0x402, "Wind direction must be between 0.0 and 359.9 degrees")
 
-    update_device_state(
-        "observingconditions", device_number, {"winddirection": WindDirection}
-    )
+    update_device_state("observingconditions", device_number, {"winddirection": WindDirection})
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -509,12 +420,8 @@ def set_winddirection(
     )
 
 
-@router.get(
-    "/observingconditions/{device_number}/windgust", response_model=DoubleResponse
-)
-def get_windgust(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+@router.get("/observingconditions/{device_number}/windgust", response_model=DoubleResponse)
+def get_windgust(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("observingconditions", device_number)
     state = get_device_state("observingconditions", device_number)
     return DoubleResponse(
@@ -524,16 +431,14 @@ def get_windgust(
     )
 
 
-@router.put(
-    "/observingconditions/{device_number}/windgust", response_model=AlpacaResponse
-)
+@router.put("/observingconditions/{device_number}/windgust", response_model=AlpacaResponse)
 def set_windgust(
     device_number: int = Path(..., ge=0),
     WindGust: float = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("observingconditions", device_number)
-    state = get_device_state("observingconditions", device_number)
+    # state = get_device_state("observingconditions", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -549,12 +454,8 @@ def set_windgust(
     )
 
 
-@router.get(
-    "/observingconditions/{device_number}/windspeed", response_model=DoubleResponse
-)
-def get_windspeed(
-    device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
-):
+@router.get("/observingconditions/{device_number}/windspeed", response_model=DoubleResponse)
+def get_windspeed(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("observingconditions", device_number)
     state = get_device_state("observingconditions", device_number)
     return DoubleResponse(
@@ -564,16 +465,14 @@ def get_windspeed(
     )
 
 
-@router.put(
-    "/observingconditions/{device_number}/windspeed", response_model=AlpacaResponse
-)
+@router.put("/observingconditions/{device_number}/windspeed", response_model=AlpacaResponse)
 def set_windspeed(
     device_number: int = Path(..., ge=0),
     WindSpeed: float = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("observingconditions", device_number)
-    state = get_device_state("observingconditions", device_number)
+    # state = get_device_state("observingconditions", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -589,12 +488,10 @@ def set_windspeed(
     )
 
 
-@router.put(
-    "/observingconditions/{device_number}/refresh", response_model=AlpacaResponse
-)
+@router.put("/observingconditions/{device_number}/refresh", response_model=AlpacaResponse)
 def refresh(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("observingconditions", device_number)
-    state = get_device_state("observingconditions", device_number)
+    # state = get_device_state("observingconditions", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")

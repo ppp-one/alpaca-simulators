@@ -1,14 +1,13 @@
 # analyze_completeness.py
 import os
 import re
-from collections import defaultdict
 
 
 def extract_endpoints_from_api_doc(file_path):
     """Extract endpoints from an API documentation file"""
     endpoints = []
     try:
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             content = f.read()
 
         # Find all endpoints in the format: METHOD     /path
@@ -27,7 +26,7 @@ def extract_endpoints_from_python_file(file_path):
     """Extract implemented endpoints from a Python API file"""
     endpoints = []
     try:
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             content = f.read()
 
         # Find router decorators with HTTP methods - handle multi-line decorators
@@ -65,9 +64,9 @@ def normalize_path(path, device_type):
 
 def analyze_device_completeness(device_type):
     """Analyze completeness for a specific device type"""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"ANALYZING {device_type.upper()} COMPLETENESS")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Read expected endpoints from API docs
     api_doc_path = f"api_docs/{device_type}_endpoints.txt"
@@ -107,7 +106,7 @@ def analyze_device_completeness(device_type):
         for method, path in sorted(missing):
             print(f"   {method:<7} {path}")
     else:
-        print(f"\n✅ All expected endpoints are implemented!")
+        print("\n✅ All expected endpoints are implemented!")
 
     if extra:
         print(f"\n🔍 EXTRA ENDPOINTS ({len(extra)}):")
@@ -132,9 +131,9 @@ def analyze_device_completeness(device_type):
 
 def analyze_common_endpoints():
     """Analyze common endpoints implementation"""
-    print(f"\n{'='*60}")
-    print(f"ANALYZING COMMON ENDPOINTS")
-    print(f"{'='*60}")
+    print(f"\n{'=' * 60}")
+    print("ANALYZING COMMON ENDPOINTS")
+    print(f"{'=' * 60}")
 
     # Read expected common endpoints
     common_doc_path = "api_docs/common_endpoints.txt"
@@ -172,7 +171,7 @@ def analyze_common_endpoints():
         for method, path in sorted(missing):
             print(f"   {method:<7} {path}")
     else:
-        print(f"\n✅ All expected common endpoints are implemented!")
+        print("\n✅ All expected common endpoints are implemented!")
 
     if extra:
         print(f"\n🔍 EXTRA COMMON ENDPOINTS ({len(extra)}):")
@@ -180,9 +179,7 @@ def analyze_common_endpoints():
             print(f"   {method:<7} {path}")
 
     completion_rate = (
-        ((len(expected_set) - len(missing)) / len(expected_set)) * 100
-        if expected_set
-        else 0
+        ((len(expected_set) - len(missing)) / len(expected_set)) * 100 if expected_set else 0
     )
     print(f"\n📊 Common endpoints completion rate: {completion_rate:.1f}%")
 
@@ -199,9 +196,7 @@ def main():
     print("=" * 60)
 
     # Check if we're in the right directory
-    if not os.path.exists("api_docs") or not os.path.exists(
-        "observatory_simulator/api"
-    ):
+    if not os.path.exists("api_docs") or not os.path.exists("observatory_simulator/api"):
         print("❌ Please run this script from the project root directory")
         return
 
@@ -225,9 +220,9 @@ def main():
             device_stats.append(stats)
 
     # Summary
-    print(f"\n{'='*60}")
-    print(f"SUMMARY")
-    print(f"{'='*60}")
+    print(f"\n{'=' * 60}")
+    print("SUMMARY")
+    print(f"{'=' * 60}")
 
     if common_stats:
         print(f"Common endpoints: {common_stats['completion_rate']:.1f}% complete")
@@ -239,7 +234,8 @@ def main():
     print("\nDevice-specific endpoints:")
     for stats in device_stats:
         print(
-            f"  {stats['device_type']:<20}: {stats['completion_rate']:>5.1f}% complete ({stats['implemented']}/{stats['expected']} endpoints)"
+            f"  {stats['device_type']:<20}: {stats['completion_rate']:>5.1f}% complete "
+            f"({stats['implemented']}/{stats['expected']} endpoints)"
         )
         total_expected += stats["expected"]
         total_implemented += stats["implemented"]
@@ -250,7 +246,8 @@ def main():
             ((total_implemented) / (total_expected)) * 100 if total_expected > 0 else 0
         )
         print(
-            f"\nOverall device endpoints: {overall_completion:.1f}% complete ({total_implemented}/{total_expected} endpoints)"
+            f"\nOverall device endpoints: {overall_completion:.1f}% complete "
+            f"({total_implemented}/{total_expected} endpoints)"
         )
         print(f"Total missing endpoints: {total_missing}")
 
