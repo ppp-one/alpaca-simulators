@@ -246,3 +246,5 @@ devices:
       covermoving: false
       coverstate: 1  # Closed
       maxbrightness: 255
+
+gaia_query_timeout: 30

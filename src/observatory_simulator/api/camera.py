@@ -7,6 +7,7 @@ from fastapi import APIRouter, BackgroundTasks, Form, Path, Query
 from fastapi.responses import StreamingResponse
 
 from observatory_simulator.api.common import AlpacaError, validate_device
+from observatory_simulator.config import Config
 from observatory_simulator.state import (
     AlpacaResponse,
     BoolResponse,
@@ -142,6 +143,7 @@ async def exposure_task(device_number: int, duration: float, light: bool):
                 dec=dec,
                 exp_time=duration,
                 light=1 if light else 0,
+                timeout=Config().load().get("gaia_query_timeout", 30),
             )
             image_cache[key] = image_data
 

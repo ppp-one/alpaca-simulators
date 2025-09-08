@@ -8,8 +8,8 @@ from pydantic import BaseModel
 from .config import Config
 
 # Load configuration
-CONFIG = Config(os.environ.get("ASTRA_SIMULATORS_CONFIG", "config.yaml"))
-config = CONFIG.get()
+CONFIG_NAME = os.environ.get("ASTRA_SIMULATORS_CONFIG", "config.yaml")
+DEVICE_CONFIG = Config(CONFIG_NAME).load()
 
 
 # --- Pydantic Models for API Responses ---
@@ -353,19 +353,19 @@ def update_device_state(device_type: str, device_number: int, new_state: dict[st
 
 
 def get_device_config(device_type: str, device_number: int) -> dict[str, Any]:
-    """Get device configuration from config.yaml"""
-    return config.get("devices", {}).get(device_type, {}).get(device_number, {})
+    """Get device configuration from yaml configuration file."""
+    return DEVICE_CONFIG.get("devices", {}).get(device_type, {}).get(device_number, {})
 
 
 def validate_device_exists(device_type: str, device_number: int) -> bool:
-    """Check if device exists in configuration"""
-    return device_number in config.get("devices", {}).get(device_type, {})
+    """Check if device exists in configuration file."""
+    return device_number in DEVICE_CONFIG.get("devices", {}).get(device_type, {})
 
 
 def reload_config() -> None:
     """Reload configuration from file (useful for development)"""
-    global config
-    config = CONFIG.reload()
+    global DEVICE_CONFIG
+    DEVICE_CONFIG = Config(CONFIG_NAME).reload()
     # Clear existing state so it will be re-initialized with new config
     global _state
     with _state_lock:
@@ -373,8 +373,8 @@ def reload_config() -> None:
 
 
 def get_all_configured_devices() -> dict[str, list[int]]:
-    """Get all device types and numbers that are configured"""
+    """Get all device types and numbers contained in the configuration file."""
     devices = {}
-    for device_type, device_configs in config.get("devices", {}).items():
+    for device_type, device_configs in DEVICE_CONFIG.get("devices", {}).items():
         devices[device_type] = list(device_configs.keys())
     return devices

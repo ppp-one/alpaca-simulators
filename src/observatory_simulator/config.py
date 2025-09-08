@@ -35,7 +35,7 @@ class Config:
         self._load_lock = threading.Lock()
         logging.info(f"Loading config {self.config_name}.")
 
-    def get(self) -> dict:
+    def load(self) -> dict:
         """Return the loaded config. Loads on first access."""
         if self._config is None:
             with self._load_lock:
@@ -63,7 +63,7 @@ class Config:
         shutil.copyfile(self._DEFAULT_PATH, self._config_path)
 
     def __getitem__(self, key):
-        return self.get()[key]
+        return self.load()[key]
 
     def reload(self):
         """Force reload from disk"""

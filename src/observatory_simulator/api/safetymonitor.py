@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Form, Path, Query
 
 from observatory_simulator.api.common import validate_device
@@ -16,10 +18,17 @@ router = APIRouter()
 def get_issafe(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("safetymonitor", device_number)
     state = get_device_state("safetymonitor", device_number)
+    issafe_value = state.get("issafe", True)
+    server_transaction_id = get_server_transaction_id()
+    logging.debug(
+        f"GET /safetymonitor/{device_number}/issafe: device_number={device_number}, "
+        f"ClientTransactionID={ClientTransactionID}, "
+        f"ServerTransactionID={server_transaction_id}, Value={issafe_value}"
+    )
     return BoolResponse(
-        Value=state.get("issafe", True),
+        Value=issafe_value,
         ClientTransactionID=ClientTransactionID,
-        ServerTransactionID=get_server_transaction_id(),
+        ServerTransactionID=server_transaction_id,
     )
 
 
@@ -36,8 +45,13 @@ def set_issafe(
     # raise AlpacaError(0x407, "Device is not connected")
 
     update_device_state("safetymonitor", device_number, {"issafe": IsSafe})
-
+    server_transaction_id = get_server_transaction_id()
+    logging.debug(
+        f"PUT /safetymonitor/{device_number}/issafe: device_number={device_number}, "
+        f"IsSafe={IsSafe}, ClientTransactionID={ClientTransactionID}, "
+        f"ServerTransactionID={server_transaction_id}"
+    )
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
-        ServerTransactionID=get_server_transaction_id(),
+        ServerTransactionID=server_transaction_id,
     )
