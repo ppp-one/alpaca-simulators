@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from observatory_simulator.config import Config
+from alpaca_simulators.config import Config
 
 
 @pytest.fixture(autouse=True)
@@ -41,7 +41,7 @@ def test_singleton():
 
 def test_loads_default_on_missing_config(temp_config_dir):
     config = Config()
-    loaded = config.get()
+    loaded = config.load()
     assert loaded == temp_config_dir["default_config"]
     assert temp_config_dir["config_path"].exists()
 
@@ -54,7 +54,7 @@ def test_getitem():
 
 def test_reload(temp_config_dir):
     config = Config()
-    _ = config.get()
+    _ = config.load()
     new_config = {"foo": "changed", "baz": 99}
     with open(temp_config_dir["config_path"], "w", encoding="utf-8") as f:
         yaml.safe_dump(new_config, f)
@@ -69,11 +69,11 @@ def test_missing_config_dir_raises(monkeypatch, temp_config_dir):
     monkeypatch.setattr(Config, "_DEFAULT_PATH", bad_dir / "template.yaml")
     Config._instance = None
     with pytest.raises(FileNotFoundError):
-        Config().get()
+        Config().load()
 
 
 def test_missing_default_config_raises(temp_config_dir):
     os.remove(temp_config_dir["default_config_path"])
     Config._instance = None
     with pytest.raises(FileNotFoundError):
-        Config().get()
+        Config().load()

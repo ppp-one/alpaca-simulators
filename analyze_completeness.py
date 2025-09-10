@@ -78,7 +78,7 @@ def analyze_device_completeness(device_type):
     print(f"📋 Expected endpoints: {len(expected_endpoints)}")
 
     # Read implemented endpoints from Python file
-    python_file_path = f"observatory_simulator/api/{device_type}.py"
+    python_file_path = f"alpaca_simulators/api/{device_type}.py"
     if not os.path.exists(python_file_path):
         print(f"❌ Implementation file not found: {python_file_path}")
         return
@@ -145,7 +145,7 @@ def analyze_common_endpoints():
     print(f"📋 Expected common endpoints: {len(expected_endpoints)}")
 
     # Read implemented common endpoints
-    common_file_path = "observatory_simulator/api/common.py"
+    common_file_path = "alpaca_simulators/api/common.py"
     if not os.path.exists(common_file_path):
         print(f"❌ Common implementation file not found: {common_file_path}")
         return
@@ -196,7 +196,7 @@ def main():
     print("=" * 60)
 
     # Check if we're in the right directory
-    if not os.path.exists("api_docs") or not os.path.exists("observatory_simulator/api"):
+    if not os.path.exists("api_docs") or not os.path.exists("alpaca_simulators/api"):
         print("❌ Please run this script from the project root directory")
         return
 

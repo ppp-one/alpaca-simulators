@@ -21,14 +21,14 @@ license = "MIT"
 name = "alpaca-simulators"
 readme = "README.md"
 requires-python = ">=3.10"
-version = "0.1.0"
+version = "0.2.0"
 
 [project.optional-dependencies]
 dev = ["ruff", "pytest"]
 test = ["pytest"]
 
 [project.scripts]
-alpaca-simulators = "observatory_simulator.run_simulator:main"
+alpaca-simulators = "alpaca_simulators.run_simulator:main"
 
 [project.urls]
 "Bug Tracker" = "https://github.com/ppp-one/alpaca-simulators/issues"
@@ -46,7 +46,7 @@ select = ["E", "F", "I001", "UP"]
 
 [tool.uv.build-backend]
 data = [
-  "src/observatory_simulator/config/"
+  "src/alpaca_simulators/config/"
 ]
-module-name = "observatory_simulator"
-source-include = ["src/observatory_simulator/config/default.yaml"]
+module-name = "alpaca_simulators"
+source-include = ["src/alpaca_simulators/config/default.yaml"]

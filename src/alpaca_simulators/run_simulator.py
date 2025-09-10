@@ -37,7 +37,7 @@ def main():
     os.environ["ASTRA_SIMULATORS_CONFIG"] = args.config
 
     uvicorn.run(
-        "observatory_simulator.main:app",
+        "alpaca_simulators.main:app",
         host=args.host,
         port=args.port,
         reload=args.reload,

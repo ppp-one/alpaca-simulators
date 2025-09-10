@@ -1,1 +1,1 @@
-include src/observatory_simulator/config/template.yaml
+include src/alpaca_simulators/config/template.yaml
