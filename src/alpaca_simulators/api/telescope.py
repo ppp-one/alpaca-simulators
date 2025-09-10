@@ -4,8 +4,8 @@ from time import sleep
 
 from fastapi import APIRouter, Form, Path, Query
 
-from observatory_simulator.api.common import AlpacaError, validate_device
-from observatory_simulator.state import (
+from alpaca_simulators.api.common import AlpacaError, validate_device
+from alpaca_simulators.state import (
     AlignmentModes,
     AlpacaResponse,
     BoolResponse,

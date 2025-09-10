@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 
-from observatory_simulator.api import (
+from alpaca_simulators.api import (
     camera,
     common,
     covercalibrator,
@@ -18,12 +18,12 @@ from observatory_simulator.api import (
     switch,
     telescope,
 )
-from observatory_simulator.api.common import AlpacaError
-from observatory_simulator.endpoint_discovery import (
+from alpaca_simulators.api.common import AlpacaError
+from alpaca_simulators.endpoint_discovery import (
     discover_device_endpoints,
     get_action_endpoints,
 )
-from observatory_simulator.state import get_server_transaction_id, reload_config
+from alpaca_simulators.state import get_server_transaction_id, reload_config
 
 app = FastAPI(
     title="Alpaca Observatory Simulator",
@@ -230,7 +230,7 @@ async def get_management_description():
 @app.get("/management/v1/configureddevices")
 async def get_configured_devices():
     """Return list of configured devices"""
-    from observatory_simulator.state import config
+    from alpaca_simulators.state import config
 
     devices = []
 

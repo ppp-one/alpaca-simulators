@@ -2,8 +2,8 @@ import logging
 
 from fastapi import APIRouter, Form, Path, Query
 
-from observatory_simulator.api.common import validate_device
-from observatory_simulator.state import (
+from alpaca_simulators.api.common import validate_device
+from alpaca_simulators.state import (
     AlpacaResponse,
     BoolResponse,
     get_device_state,

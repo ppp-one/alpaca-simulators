@@ -4,7 +4,7 @@ from typing import Any
 
 from fastapi import APIRouter, Form, Path, Query, Request
 
-from observatory_simulator.state import (
+from alpaca_simulators.state import (
     AlpacaResponse,
     BoolResponse,
     DeviceStateResponse,

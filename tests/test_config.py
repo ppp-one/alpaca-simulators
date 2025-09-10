@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from observatory_simulator.config import Config
+from alpaca_simulators.config import Config
 
 
 @pytest.fixture(autouse=True)

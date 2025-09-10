@@ -72,14 +72,14 @@ This test interface is particularly useful for:
 
 ### Device Configuration
 
-On first run, the simulator generates `src/observatory_simulator/config/config.yaml` from a template. You can modify this file to set:
+On first run, the simulator generates `src/alpaca_simulators/config/config.yaml` from a template. You can modify this file to set:
 
 - Device names and descriptions
 - Initial property values
 - Capabilities and limits
 - Available options (e.g., filter names, readout modes)
 
-You can create and maintain multiple configuration files for different setups in `src/observatory_simulator/config`. To select them, pass their filename with the `--config option`:
+You can create and maintain multiple configuration files for different setups in `src/alpaca_simulators/config`. To select them, pass their filename with the `--config option`:
 ```bash
 uv run alpaca-simulators --config my_config.yaml
 ```
@@ -111,7 +111,7 @@ The simulator is built with:
 ### Project Structure
 
 ```
-observatory_simulator/
+alpaca_simulators/
 ├── main.py              # FastAPI application and routing
 ├── config/              # Device-specific API implementations
 │   ├── template.yaml    # Template device configuration tracked by git

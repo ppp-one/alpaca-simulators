@@ -6,9 +6,9 @@ import numpy as np
 from fastapi import APIRouter, BackgroundTasks, Form, Path, Query
 from fastapi.responses import StreamingResponse
 
-from observatory_simulator.api.common import AlpacaError, validate_device
-from observatory_simulator.config import Config
-from observatory_simulator.state import (
+from alpaca_simulators.api.common import AlpacaError, validate_device
+from alpaca_simulators.config import Config
+from alpaca_simulators.state import (
     AlpacaResponse,
     BoolResponse,
     CameraStates,
