@@ -6,7 +6,6 @@ from alpaca_simulators.state import (
     BoolResponse,
     DoubleResponse,
     IntResponse,
-    get_device_config,
     get_device_state,
     get_server_transaction_id,
     update_device_state,
@@ -18,9 +17,9 @@ router = APIRouter()
 @router.get("/focuser/{device_number}/absolute", response_model=BoolResponse)
 def get_absolute(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("focuser", device_number)
-    config = get_device_config("focuser", device_number)
+    state = get_device_state("focuser", device_number)
     return BoolResponse(
-        Value=config.get("absolute", True),
+        Value=state.get("absolute", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -40,9 +39,9 @@ def get_ismoving(device_number: int = Path(..., ge=0), ClientTransactionID: int 
 @router.get("/focuser/{device_number}/maxincrement", response_model=IntResponse)
 def get_maxincrement(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("focuser", device_number)
-    config = get_device_config("focuser", device_number)
+    state = get_device_state("focuser", device_number)
     return IntResponse(
-        Value=config.get("maxincrement", 1000),
+        Value=state.get("maxincrement", 1000),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -51,9 +50,9 @@ def get_maxincrement(device_number: int = Path(..., ge=0), ClientTransactionID: 
 @router.get("/focuser/{device_number}/maxstep", response_model=IntResponse)
 def get_maxstep(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("focuser", device_number)
-    config = get_device_config("focuser", device_number)
+    state = get_device_state("focuser", device_number)
     return IntResponse(
-        Value=config.get("maxstep", 100000),
+        Value=state.get("maxstep", 100000),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -73,9 +72,9 @@ def get_position(device_number: int = Path(..., ge=0), ClientTransactionID: int 
 @router.get("/focuser/{device_number}/stepsize", response_model=DoubleResponse)
 def get_stepsize(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("focuser", device_number)
-    config = get_device_config("focuser", device_number)
+    state = get_device_state("focuser", device_number)
     return DoubleResponse(
-        Value=config.get("stepsize", 1.0),
+        Value=state.get("stepsize", 1.0),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -104,8 +103,8 @@ def set_tempcomp(
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
 
-    config = get_device_config("focuser", device_number)
-    if not config.get("tempcompavailable", True):
+    state = get_device_state("focuser", device_number)
+    if not state.get("tempcompavailable", True):
         raise AlpacaError(0x401, "Temperature compensation not available")
 
     update_device_state("focuser", device_number, {"tempcomp": TempComp})
@@ -121,9 +120,9 @@ def get_tempcompavailable(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):
     validate_device("focuser", device_number)
-    config = get_device_config("focuser", device_number)
+    state = get_device_state("focuser", device_number)
     return BoolResponse(
-        Value=config.get("tempcompavailable", True),
+        Value=state.get("tempcompavailable", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -168,8 +167,8 @@ def move(
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
 
-    config = get_device_config("focuser", device_number)
-    max_step = config.get("maxstep", 100000)
+    state = get_device_state("focuser", device_number)
+    max_step = state.get("maxstep", 100000)
 
     if Position < 0 or Position > max_step:
         raise AlpacaError(0x402, f"Position out of range (0-{max_step})")

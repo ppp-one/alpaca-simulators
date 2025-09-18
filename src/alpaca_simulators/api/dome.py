@@ -7,7 +7,6 @@ from alpaca_simulators.state import (
     DoubleResponse,
     IntResponse,
     ShutterState,
-    get_device_config,
     get_device_state,
     get_server_transaction_id,
     update_device_state,
@@ -67,9 +66,9 @@ def get_azimuth(device_number: int = Path(..., ge=0), ClientTransactionID: int =
 @router.get("/dome/{device_number}/canfindhome", response_model=BoolResponse)
 def get_canfindhome(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("dome", device_number)
-    config = get_device_config("dome", device_number)
+    state = get_device_state("dome", device_number)
     return BoolResponse(
-        Value=config.get("canfindhome", True),
+        Value=state.get("canfindhome", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -78,9 +77,9 @@ def get_canfindhome(device_number: int = Path(..., ge=0), ClientTransactionID: i
 @router.get("/dome/{device_number}/canpark", response_model=BoolResponse)
 def get_canpark(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("dome", device_number)
-    config = get_device_config("dome", device_number)
+    state = get_device_state("dome", device_number)
     return BoolResponse(
-        Value=config.get("canpark", True),
+        Value=state.get("canpark", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -89,9 +88,9 @@ def get_canpark(device_number: int = Path(..., ge=0), ClientTransactionID: int =
 @router.get("/dome/{device_number}/cansetaltitude", response_model=BoolResponse)
 def get_cansetaltitude(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("dome", device_number)
-    config = get_device_config("dome", device_number)
+    state = get_device_state("dome", device_number)
     return BoolResponse(
-        Value=config.get("cansetaltitude", True),
+        Value=state.get("cansetaltitude", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -100,9 +99,9 @@ def get_cansetaltitude(device_number: int = Path(..., ge=0), ClientTransactionID
 @router.get("/dome/{device_number}/cansetazimuth", response_model=BoolResponse)
 def get_cansetazimuth(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("dome", device_number)
-    config = get_device_config("dome", device_number)
+    state = get_device_state("dome", device_number)
     return BoolResponse(
-        Value=config.get("cansetazimuth", True),
+        Value=state.get("cansetazimuth", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -111,9 +110,9 @@ def get_cansetazimuth(device_number: int = Path(..., ge=0), ClientTransactionID:
 @router.get("/dome/{device_number}/cansetpark", response_model=BoolResponse)
 def get_cansetpark(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("dome", device_number)
-    config = get_device_config("dome", device_number)
+    state = get_device_state("dome", device_number)
     return BoolResponse(
-        Value=config.get("cansetpark", True),
+        Value=state.get("cansetpark", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -122,9 +121,9 @@ def get_cansetpark(device_number: int = Path(..., ge=0), ClientTransactionID: in
 @router.get("/dome/{device_number}/cansetshutter", response_model=BoolResponse)
 def get_cansetshutter(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("dome", device_number)
-    config = get_device_config("dome", device_number)
+    state = get_device_state("dome", device_number)
     return BoolResponse(
-        Value=config.get("cansetshutter", True),
+        Value=state.get("cansetshutter", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -133,9 +132,9 @@ def get_cansetshutter(device_number: int = Path(..., ge=0), ClientTransactionID:
 @router.get("/dome/{device_number}/canslave", response_model=BoolResponse)
 def get_canslave(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("dome", device_number)
-    config = get_device_config("dome", device_number)
+    state = get_device_state("dome", device_number)
     return BoolResponse(
-        Value=config.get("canslave", True),
+        Value=state.get("canslave", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -144,9 +143,9 @@ def get_canslave(device_number: int = Path(..., ge=0), ClientTransactionID: int 
 @router.get("/dome/{device_number}/cansyncazimuth", response_model=BoolResponse)
 def get_cansyncazimuth(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("dome", device_number)
-    config = get_device_config("dome", device_number)
+    state = get_device_state("dome", device_number)
     return BoolResponse(
-        Value=config.get("cansyncazimuth", True),
+        Value=state.get("cansyncazimuth", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -280,8 +279,8 @@ def park(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
 
-    config = get_device_config("dome", device_number)
-    park_azimuth = config.get("parkazimuth", 0.0)
+    state = get_device_state("dome", device_number)
+    park_azimuth = state.get("parkazimuth", 0.0)
 
     update_device_state(
         "dome",

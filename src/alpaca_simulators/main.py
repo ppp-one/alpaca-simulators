@@ -19,6 +19,7 @@ from alpaca_simulators.api import (
     telescope,
 )
 from alpaca_simulators.api.common import AlpacaError
+from alpaca_simulators.config import Config
 from alpaca_simulators.endpoint_discovery import (
     discover_device_endpoints,
     get_action_endpoints,
@@ -152,6 +153,7 @@ async def root():
         "test_interface": "/test",
         "management_api": "/management",
         "device_api": "/api/v1",
+        "sunlight_control": "/sunlight",
     }
 
 
@@ -175,6 +177,23 @@ async def reload_config_state():
     """Reload default state config"""
     reload_config()
     return {"message": "State config reloaded"}
+
+
+@app.put("/sunlight")
+async def enable_sunlight(state: bool):
+    """Enable or disable sunlight simulation"""
+    print(Config().load().get("sunlight"))
+    Config().load().update({"sunlight": state})
+    print(Config().load().get("sunlight"))
+
+    return {"message": f"Sunlight simulation {'enabled' if state else 'disabled'}"}
+
+
+@app.get("/sunlight")
+async def get_sunlight():
+    """Get current sunlight simulation state"""
+    state = Config().load().get("sunlight", False)
+    return {"sunlight": state}
 
 
 @app.get("/api/v1")

@@ -99,8 +99,8 @@ devices:
       sideofpier: 0  # Unknown
       siderealtime: 0.0
       siteelevation: 1000.0
-      sitelatitude: 45.0
-      sitelongitude: -122.0
+      sitelatitude: 48.0
+      sitelongitude: 8.0
       slewing: false
       slewsettletime: 0.0
       targetdeclination: 0.0
@@ -248,3 +248,4 @@ devices:
       maxbrightness: 255
 
 gaia_query_timeout: 30
+sunlight: false

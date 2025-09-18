@@ -18,7 +18,6 @@ from alpaca_simulators.state import (
     StringArrayResponse,
     StringResponse,
     TelescopeAxes,
-    get_device_config,
     get_device_state,
     get_server_transaction_id,
     update_device_state,
@@ -50,9 +49,9 @@ def degrees_to_hours(degrees):
 @router.get("/telescope/{device_number}/alignmentmode", response_model=IntResponse)
 def get_alignmentmode(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
     return IntResponse(
-        Value=config.get("alignmentmode", AlignmentModes.GERMAN_POLAR),
+        Value=state.get("alignmentmode", AlignmentModes.GERMAN_POLAR),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -74,8 +73,8 @@ def get_altitude(device_number: int = Path(..., ge=0), ClientTransactionID: int 
 @router.get("/telescope/{device_number}/aperturearea", response_model=DoubleResponse)
 def get_aperturearea(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
-    diameter = config.get("aperturediameter", 8.0)  # m
+    state = get_device_state("telescope", device_number)
+    diameter = state.get("aperturediameter", 8.0)  # m
     area = math.pi * (diameter / 2) ** 2  # m²
     return DoubleResponse(
         Value=area,
@@ -89,9 +88,9 @@ def get_aperturediameter(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
     return DoubleResponse(
-        Value=config.get("aperturediameter", 8.0),  # m
+        Value=state.get("aperturediameter", 8.0),  # m
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -135,9 +134,9 @@ def get_azimuth(device_number: int = Path(..., ge=0), ClientTransactionID: int =
 @router.get("/telescope/{device_number}/canfindhome", response_model=BoolResponse)
 def get_canfindhome(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
     return BoolResponse(
-        Value=config.get("canfindhome", True),
+        Value=state.get("canfindhome", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -146,9 +145,9 @@ def get_canfindhome(device_number: int = Path(..., ge=0), ClientTransactionID: i
 @router.get("/telescope/{device_number}/canpark", response_model=BoolResponse)
 def get_canpark(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
     return BoolResponse(
-        Value=config.get("canpark", True),
+        Value=state.get("canpark", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -157,9 +156,9 @@ def get_canpark(device_number: int = Path(..., ge=0), ClientTransactionID: int =
 @router.get("/telescope/{device_number}/canpulseguide", response_model=BoolResponse)
 def get_canpulseguide(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
     return BoolResponse(
-        Value=config.get("canpulseguide", True),
+        Value=state.get("canpulseguide", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -170,9 +169,9 @@ def get_cansetdeclinationrate(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
     return BoolResponse(
-        Value=config.get("cansetdeclinationrate", True),
+        Value=state.get("cansetdeclinationrate", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -183,9 +182,9 @@ def get_cansetguiderates(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
     return BoolResponse(
-        Value=config.get("cansetguiderates", True),
+        Value=state.get("cansetguiderates", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -194,9 +193,9 @@ def get_cansetguiderates(
 @router.get("/telescope/{device_number}/cansetpark", response_model=BoolResponse)
 def get_cansetpark(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
     return BoolResponse(
-        Value=config.get("cansetpark", True),
+        Value=state.get("cansetpark", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -205,9 +204,9 @@ def get_cansetpark(device_number: int = Path(..., ge=0), ClientTransactionID: in
 @router.get("/telescope/{device_number}/cansetpierside", response_model=BoolResponse)
 def get_cansetpierside(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
     return BoolResponse(
-        Value=config.get("cansetpierside", True),
+        Value=state.get("cansetpierside", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -218,9 +217,9 @@ def get_cansetrightascensionrate(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
     return BoolResponse(
-        Value=config.get("cansetrightascensionrate", True),
+        Value=state.get("cansetrightascensionrate", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -229,9 +228,9 @@ def get_cansetrightascensionrate(
 @router.get("/telescope/{device_number}/cansettracking", response_model=BoolResponse)
 def get_cansettracking(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
     return BoolResponse(
-        Value=config.get("cansettracking", True),
+        Value=state.get("cansettracking", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -240,9 +239,9 @@ def get_cansettracking(device_number: int = Path(..., ge=0), ClientTransactionID
 @router.get("/telescope/{device_number}/canslew", response_model=BoolResponse)
 def get_canslew(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
     return BoolResponse(
-        Value=config.get("canslew", True),
+        Value=state.get("canslew", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -251,9 +250,9 @@ def get_canslew(device_number: int = Path(..., ge=0), ClientTransactionID: int =
 @router.get("/telescope/{device_number}/canslewaltaz", response_model=BoolResponse)
 def get_canslewaltaz(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
     return BoolResponse(
-        Value=config.get("canslewaltaz", True),
+        Value=state.get("canslewaltaz", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -264,9 +263,9 @@ def get_canslewaltazasync(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
     return BoolResponse(
-        Value=config.get("canslewaltazasync", True),
+        Value=state.get("canslewaltazasync", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -275,9 +274,9 @@ def get_canslewaltazasync(
 @router.get("/telescope/{device_number}/canslewasync", response_model=BoolResponse)
 def get_canslewasync(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
     return BoolResponse(
-        Value=config.get("canslewasync", True),
+        Value=state.get("canslewasync", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -286,9 +285,9 @@ def get_canslewasync(device_number: int = Path(..., ge=0), ClientTransactionID: 
 @router.get("/telescope/{device_number}/cansync", response_model=BoolResponse)
 def get_cansync(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
     return BoolResponse(
-        Value=config.get("cansync", True),
+        Value=state.get("cansync", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -297,9 +296,9 @@ def get_cansync(device_number: int = Path(..., ge=0), ClientTransactionID: int =
 @router.get("/telescope/{device_number}/cansyncaltaz", response_model=BoolResponse)
 def get_cansyncaltaz(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
     return BoolResponse(
-        Value=config.get("cansyncaltaz", True),
+        Value=state.get("cansyncaltaz", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -308,9 +307,9 @@ def get_cansyncaltaz(device_number: int = Path(..., ge=0), ClientTransactionID: 
 @router.get("/telescope/{device_number}/canunpark", response_model=BoolResponse)
 def get_canunpark(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
     return BoolResponse(
-        Value=config.get("canunpark", True),
+        Value=state.get("canunpark", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -396,9 +395,9 @@ def get_equatorialsystem(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
     return IntResponse(
-        Value=config.get("equatorialsystem", EquatorialCoordinateType.TOPOCENTRIC),
+        Value=state.get("equatorialsystem", EquatorialCoordinateType.TOPOCENTRIC),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -407,9 +406,9 @@ def get_equatorialsystem(
 @router.get("/telescope/{device_number}/focallength", response_model=DoubleResponse)
 def get_focallength(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
     return DoubleResponse(
-        Value=config.get("focallength", 1000.0),  # mm
+        Value=state.get("focallength", 1000.0),  # mm
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -583,11 +582,11 @@ def set_sideofpier(
 @router.get("/telescope/{device_number}/siderealtime", response_model=DoubleResponse)
 def get_siderealtime(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
 
     # Calculate local sidereal time
     utc_now = datetime.now(timezone.utc)
-    longitude = config.get("sitelongitude", 0.0)
+    longitude = state.get("sitelongitude", 0.0)
 
     # Simplified calculation - in practice this would use proper astronomy formulas
     jd = utc_now.timestamp() / 86400.0 + 2440587.5  # Julian day
@@ -604,9 +603,9 @@ def get_siderealtime(device_number: int = Path(..., ge=0), ClientTransactionID: 
 @router.get("/telescope/{device_number}/siteelevation", response_model=DoubleResponse)
 def get_siteelevation(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
     return DoubleResponse(
-        Value=config.get("siteelevation", 0.0),
+        Value=state.get("siteelevation", 0.0),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -631,9 +630,9 @@ def set_siteelevation(
 @router.get("/telescope/{device_number}/sitelatitude", response_model=DoubleResponse)
 def get_sitelatitude(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
     return DoubleResponse(
-        Value=config.get("sitelatitude", 0.0),
+        Value=state.get("sitelatitude", 0.0),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -661,9 +660,9 @@ def set_sitelatitude(
 @router.get("/telescope/{device_number}/sitelongitude", response_model=DoubleResponse)
 def get_sitelongitude(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
     return DoubleResponse(
-        Value=config.get("sitelongitude", 0.0),
+        Value=state.get("sitelongitude", 0.0),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -879,8 +878,8 @@ def set_trackingrate(
 @router.get("/telescope/{device_number}/trackingrates", response_model=StringArrayResponse)
 def get_trackingrates(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
-    rates = config.get("trackingrates", ["0", "1", "2", "3"])  # Sidereal, Lunar, Solar, King
+    state = get_device_state("telescope", device_number)
+    rates = state.get("trackingrates", ["0", "1", "2", "3"])  # Sidereal, Lunar, Solar, King
     return StringArrayResponse(
         Value=rates,
         ClientTransactionID=ClientTransactionID,
@@ -942,7 +941,7 @@ def get_axisrates(
     ClientTransactionID: int = Query(0),
 ):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
 
     if Axis not in [
         TelescopeAxes.PRIMARY,
@@ -952,7 +951,7 @@ def get_axisrates(
         raise AlpacaError(0x402, "Invalid axis")
 
     # Return available rates for the axis
-    rates = config.get(f"axis{Axis}rates", ["0.0", "1.0", "2.0"])
+    rates = state.get(f"axis{Axis}rates", ["0.0", "1.0", "2.0"])
     return StringArrayResponse(
         Value=rates,
         ClientTransactionID=ClientTransactionID,
@@ -967,7 +966,7 @@ def get_canmoveaxis(
     ClientTransactionID: int = Query(0),
 ):
     validate_device("telescope", device_number)
-    config = get_device_config("telescope", device_number)
+    state = get_device_state("telescope", device_number)
 
     if Axis not in [
         TelescopeAxes.PRIMARY,
@@ -976,7 +975,7 @@ def get_canmoveaxis(
     ]:
         raise AlpacaError(0x402, "Invalid axis")
 
-    can_move = config.get(f"canmoveaxis{Axis}", True)
+    can_move = state.get(f"canmoveaxis{Axis}", True)
     return BoolResponse(
         Value=can_move,
         ClientTransactionID=ClientTransactionID,
@@ -1064,9 +1063,9 @@ def park(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
 
-    config = get_device_config("telescope", device_number)
-    park_ra = config.get("parkrightascension", 180.0)
-    park_dec = config.get("parkdeclination", 45.0)
+    state = get_device_state("telescope", device_number)
+    park_ra = state.get("parkrightascension", 180.0)
+    park_dec = state.get("parkdeclination", 45.0)
 
     update_device_state(
         "telescope",
