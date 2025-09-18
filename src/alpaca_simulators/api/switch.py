@@ -41,7 +41,7 @@ def get_canasync(
 
     switch_config = switches[str(Id)]
     return BoolResponse(
-        Value=switch_state.get("canasync", False),
+        Value=switch_config.get("canasync", False),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -62,7 +62,7 @@ def get_canwrite(
 
     switch_config = switches[str(Id)]
     return BoolResponse(
-        Value=switch_state.get("canwrite", True),
+        Value=switch_config.get("canwrite", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -83,9 +83,9 @@ def get_getswitch(
         raise AlpacaError(0x402, f"Invalid switch ID: {Id}")
 
     # Get current value from state or default from config
-    switch_states = state.get("switches", {})
-    if str(Id) in switch_states:
-        value = switch_states[str(Id)].get("value", False)
+    switch_configs = state.get("switches", {})
+    if str(Id) in switch_configs:
+        value = switch_configs[str(Id)].get("value", False)
     else:
         value = switches[str(Id)].get("value", False)
 
@@ -114,7 +114,7 @@ def get_getswitchdescription(
 
     switch_config = switches[str(Id)]
     return StringResponse(
-        Value=switch_state.get("description", ""),
+        Value=switch_config.get("description", ""),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -135,7 +135,7 @@ def get_getswitchname(
 
     switch_config = switches[str(Id)]
     return StringResponse(
-        Value=switch_state.get("name", f"Switch {Id}"),
+        Value=switch_config.get("name", f"Switch {Id}"),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -156,9 +156,9 @@ def get_getswitchvalue(
         raise AlpacaError(0x402, f"Invalid switch ID: {Id}")
 
     # Get current value from state or default from config
-    switch_states = state.get("switches", {})
-    if str(Id) in switch_states:
-        value = switch_states[str(Id)].get("value", 0.0)
+    switch_configs = state.get("switches", {})
+    if str(Id) in switch_configs:
+        value = switch_configs[str(Id)].get("value", 0.0)
     else:
         value = switches[str(Id)].get("value", 0.0)
 
@@ -184,7 +184,7 @@ def get_minswitchvalue(
 
     switch_config = switches[str(Id)]
     return DoubleResponse(
-        Value=switch_state.get("minimum", 0.0),
+        Value=switch_config.get("minimum", 0.0),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -205,7 +205,7 @@ def get_maxswitchvalue(
 
     switch_config = switches[str(Id)]
     return DoubleResponse(
-        Value=switch_state.get("maximum", 1.0),
+        Value=switch_config.get("maximum", 1.0),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -226,7 +226,7 @@ def get_switchstep(
 
     switch_config = switches[str(Id)]
     return DoubleResponse(
-        Value=switch_state.get("step", 1.0),
+        Value=switch_config.get("step", 1.0),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -266,16 +266,16 @@ def set_setswitch(
         raise AlpacaError(0x402, f"Invalid switch ID: {Id}")
 
     switch_config = switches[str(Id)]
-    if not switch_state.get("canwrite", True):
+    if not switch_config.get("canwrite", True):
         raise AlpacaError(0x401, f"Switch {Id} is read-only")
 
     # Update switch state
-    switch_states = state.get("switches", {})
-    if str(Id) not in switch_states:
-        switch_states[str(Id)] = {}
+    switch_configs = state.get("switches", {})
+    if str(Id) not in switch_configs:
+        switch_configs[str(Id)] = {}
 
-    switch_states[str(Id)]["value"] = State
-    update_device_state("switch", device_number, {"switches": switch_states})
+    switch_configs[str(Id)]["value"] = State
+    update_device_state("switch", device_number, {"switches": switch_configs})
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -302,22 +302,22 @@ def set_setswitchvalue(
         raise AlpacaError(0x402, f"Invalid switch ID: {Id}")
 
     switch_config = switches[str(Id)]
-    if not switch_state.get("canwrite", True):
+    if not switch_config.get("canwrite", True):
         raise AlpacaError(0x401, f"Switch {Id} is read-only")
 
     # Validate range
-    min_val = switch_state.get("minimum", 0.0)
-    max_val = switch_state.get("maximum", 1.0)
+    min_val = switch_config.get("minimum", 0.0)
+    max_val = switch_config.get("maximum", 1.0)
     if Value < min_val or Value > max_val:
         raise AlpacaError(0x402, f"Value {Value} out of range ({min_val}-{max_val})")
 
     # Update switch state
-    switch_states = state.get("switches", {})
-    if str(Id) not in switch_states:
-        switch_states[str(Id)] = {}
+    switch_configs = state.get("switches", {})
+    if str(Id) not in switch_configs:
+        switch_configs[str(Id)] = {}
 
-    switch_states[str(Id)]["value"] = Value
-    update_device_state("switch", device_number, {"switches": switch_states})
+    switch_configs[str(Id)]["value"] = Value
+    update_device_state("switch", device_number, {"switches": switch_configs})
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -371,16 +371,16 @@ def set_setasync(
         raise AlpacaError(0x402, f"Invalid switch ID: {Id}")
 
     switch_config = switches[str(Id)]
-    if not switch_state.get("canasync", False):
+    if not switch_config.get("canasync", False):
         raise AlpacaError(0x401, f"Switch {Id} does not support async operation")
 
     # For simulator, treat same as synchronous
-    switch_states = state.get("switches", {})
-    if str(Id) not in switch_states:
-        switch_states[str(Id)] = {}
+    switch_configs = state.get("switches", {})
+    if str(Id) not in switch_configs:
+        switch_configs[str(Id)] = {}
 
-    switch_states[str(Id)]["value"] = State
-    update_device_state("switch", device_number, {"switches": switch_states})
+    switch_configs[str(Id)]["value"] = State
+    update_device_state("switch", device_number, {"switches": switch_configs})
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -407,22 +407,22 @@ def set_setasyncvalue(
         raise AlpacaError(0x402, f"Invalid switch ID: {Id}")
 
     switch_config = switches[str(Id)]
-    if not switch_state.get("canasync", False):
+    if not switch_config.get("canasync", False):
         raise AlpacaError(0x401, f"Switch {Id} does not support async operation")
 
     # Validate range
-    min_val = switch_state.get("minimum", 0.0)
-    max_val = switch_state.get("maximum", 1.0)
+    min_val = switch_config.get("minimum", 0.0)
+    max_val = switch_config.get("maximum", 1.0)
     if Value < min_val or Value > max_val:
         raise AlpacaError(0x402, f"Value {Value} out of range ({min_val}-{max_val})")
 
     # For simulator, treat same as synchronous
-    switch_states = state.get("switches", {})
-    if str(Id) not in switch_states:
-        switch_states[str(Id)] = {}
+    switch_configs = state.get("switches", {})
+    if str(Id) not in switch_configs:
+        switch_configs[str(Id)] = {}
 
-    switch_states[str(Id)]["value"] = Value
-    update_device_state("switch", device_number, {"switches": switch_states})
+    switch_configs[str(Id)]["value"] = Value
+    update_device_state("switch", device_number, {"switches": switch_configs})
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
