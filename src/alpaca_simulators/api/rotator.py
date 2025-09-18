@@ -5,7 +5,6 @@ from alpaca_simulators.state import (
     AlpacaResponse,
     BoolResponse,
     DoubleResponse,
-    get_device_config,
     get_device_state,
     get_server_transaction_id,
     update_device_state,
@@ -17,9 +16,9 @@ router = APIRouter()
 @router.get("/rotator/{device_number}/canreverse", response_model=BoolResponse)
 def get_canreverse(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("rotator", device_number)
-    config = get_device_config("rotator", device_number)
+    state = get_device_state("rotator", device_number)
     return BoolResponse(
-        Value=config.get("canreverse", True),
+        Value=state.get("canreverse", True),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -83,8 +82,8 @@ def set_reverse(
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
 
-    config = get_device_config("rotator", device_number)
-    if not config.get("canreverse", True):
+    state = get_device_state("rotator", device_number)
+    if not state.get("canreverse", True):
         raise AlpacaError(0x401, "Rotator cannot reverse")
 
     update_device_state("rotator", device_number, {"reverse": Reverse})
@@ -98,9 +97,9 @@ def set_reverse(
 @router.get("/rotator/{device_number}/stepsize", response_model=DoubleResponse)
 def get_stepsize(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("rotator", device_number)
-    config = get_device_config("rotator", device_number)
+    state = get_device_state("rotator", device_number)
     return DoubleResponse(
-        Value=config.get("stepsize", 0.1),
+        Value=state.get("stepsize", 0.1),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )

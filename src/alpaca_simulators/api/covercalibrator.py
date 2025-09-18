@@ -7,7 +7,6 @@ from alpaca_simulators.state import (
     CalibratorStatus,
     CoverStatus,
     IntResponse,
-    get_device_config,
     get_device_state,
     get_server_transaction_id,
     update_device_state,
@@ -76,9 +75,9 @@ def get_coverstate(device_number: int = Path(..., ge=0), ClientTransactionID: in
 @router.get("/covercalibrator/{device_number}/maxbrightness", response_model=IntResponse)
 def get_maxbrightness(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("covercalibrator", device_number)
-    config = get_device_config("covercalibrator", device_number)
+    state = get_device_state("covercalibrator", device_number)
     return IntResponse(
-        Value=config.get("maxbrightness", 255),
+        Value=state.get("maxbrightness", 255),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -116,12 +115,12 @@ def calibratoron(
 ):
     validate_device("covercalibrator", device_number)
     # state = get_device_state("covercalibrator", device_number)
-    config = get_device_config("covercalibrator", device_number)
+    state = get_device_state("covercalibrator", device_number)
 
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
 
-    max_brightness = config.get("maxbrightness", 255)
+    max_brightness = state.get("maxbrightness", 255)
     if Brightness < 0 or Brightness > max_brightness:
         raise AlpacaError(0x402, f"Brightness out of range (0-{max_brightness})")
 
