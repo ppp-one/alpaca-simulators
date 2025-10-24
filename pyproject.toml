@@ -21,7 +21,7 @@ license = "MIT"
 name = "alpaca-simulators"
 readme = "README.md"
 requires-python = ">=3.10"
-version = "0.2.2"
+version = "0.2.3"
 
 [project.optional-dependencies]
 dev = ["ruff", "pre-commit", "pytest"]
