@@ -92,8 +92,10 @@ async def exposure_task(device_number: int, duration: float, light: bool):
             seeing_multiplier = 5
 
         # Get current coordinates from telescope
-        ra = tel_state.get("rightascension", 0.0)
-        dec = tel_state.get("declination", 0.0)
+        pointing_error_ra = Config().load().get("pointing_error_ra", 0.0)  # arcmin
+        pointing_error_dec = Config().load().get("pointing_error_dec", 0.0)  # arcmin
+        ra = tel_state.get("rightascension", 0.0) + (pointing_error_ra / 60) / 15
+        dec = tel_state.get("declination", 0.0) + (pointing_error_dec / 60)
         # gaia breaks
         if dec >= 90.0 or dec <= -90.0:
             dec = 89.99 if dec >= 0 else -89.99

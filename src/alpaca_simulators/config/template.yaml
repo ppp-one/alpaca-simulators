@@ -264,4 +264,6 @@ devices:
 gaia_query_timeout: 30
 sunlight: false
 bad_tracking: false
-bad_tracking_rate: 0.05  # arcseconds per second
+bad_tracking_rate: 0.01  # arcseconds per second
+pointing_error_ra: 0.0 # arcmin
+pointing_error_dec: 0.0 # arcmin
