@@ -457,7 +457,7 @@ def get_guideraterightascension(
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
     return DoubleResponse(
-        Value=state.get("guideraterightascension", 15.0),  # arcsec/sec
+        Value=state.get("guideraterightascension", 15.0),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -1109,6 +1109,29 @@ def pulseguide(
     if Duration < 0:
         raise AlpacaError(0x402, "Duration must be positive")
 
+    state = get_device_state("telescope", device_number)
+    RightAscension = state.get("rightascension", 0.0)
+    Declination = state.get("declination", 0.0)
+
+    # Simulate movement
+    if Direction == GuideDirections.NORTH:
+        Declination += (Duration / 1000.0) * state.get("guideratedeclination", 15.0)
+    elif Direction == GuideDirections.SOUTH:
+        Declination -= (Duration / 1000.0) * state.get("guideratedeclination", 15.0)
+    elif Direction == GuideDirections.EAST:
+        RightAscension += (Duration / 1000.0) * state.get("guideraterightascension", 15.0) / 15
+    elif Direction == GuideDirections.WEST:
+        RightAscension -= (Duration / 1000.0) * state.get("guideraterightascension", 15.0) / 15
+
+    update_device_state(
+        "telescope",
+        device_number,
+        {
+            "rightascension": RightAscension,
+            "declination": Declination,
+        },
+    )
+
     # Simulate pulse guiding
     update_device_state("telescope", device_number, {"ispulseguiding": True})
 
@@ -1279,6 +1302,7 @@ def slewtocoordinatesasync(
             "declination": Declination,
             "slewing": True,
             "atpark": False,
+            "last_slew_time": datetime.now(timezone.utc),
         },
     )
 

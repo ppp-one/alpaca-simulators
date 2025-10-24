@@ -56,6 +56,20 @@ devices:
       numy: 2048
       startx: 0
       starty: 0
+      # pixel_defects:
+      #   cold:
+      #     type: constant
+      #     value: 0
+      #     rate: 0.025
+      #     seed: 1234
+      #   hot:
+      #     type: constant
+      #     value: 60000
+      #     rate: 0.025
+      #     seed: 12345
+      #   qe:
+      #     type: quantum_efficiency_map
+      #     quantum_efficiency_std: 0.25
 
   telescope:
     0:
@@ -91,8 +105,8 @@ devices:
       doesrefraction: true
       equatorialsystem: 0  # J2000
       focallength: 8.0
-      guideratedeclination: 0.0
-      guideraterightascension: 0.0
+      guideratedeclination: 0.001
+      guideraterightascension: 0.001
       ispulseguiding: false
       rightascension: 0.0
       rightascensionrate: 0.0
@@ -249,3 +263,5 @@ devices:
 
 gaia_query_timeout: 30
 sunlight: false
+bad_tracking: false
+bad_tracking_rate: 0.05  # arcseconds per second

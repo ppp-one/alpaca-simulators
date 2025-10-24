@@ -196,6 +196,23 @@ async def get_sunlight():
     return {"sunlight": state}
 
 
+@app.put("/bad_tracking")
+async def enable_bad_tracking(state: bool):
+    """Enable or disable bad_tracking simulation"""
+    print(Config().load().get("bad_tracking"))
+    Config().load().update({"bad_tracking": state})
+    print(Config().load().get("bad_tracking"))
+
+    return {"message": f"bad_tracking simulation {'enabled' if state else 'disabled'}"}
+
+
+@app.get("/bad_tracking")
+async def get_bad_tracking():
+    """Get current bad_tracking simulation state"""
+    state = Config().load().get("bad_tracking", False)
+    return {"bad_tracking": state}
+
+
 @app.get("/api/v1")
 async def api_info():
     """API information endpoint"""

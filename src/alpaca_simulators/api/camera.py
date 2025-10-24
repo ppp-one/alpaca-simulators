@@ -53,6 +53,7 @@ async def bytes_generator(image_array, numx, numy):
 
 async def exposure_task(device_number: int, duration: float, light: bool):
     """Background task to simulate camera exposure"""
+    global image_cache
     try:
         # Update camera state to exposing
         update_device_state(
@@ -111,6 +112,7 @@ async def exposure_task(device_number: int, duration: float, light: bool):
             well_depth=cam_state.get("fullwellcapacity", 2**16),
             dark_current=0.2
             * 2 ** ((cam_state.get("ccdtemperature", -60) - (-10)) / 6),  # doubles every 6C
+            pixel_defects=cam_state.get("pixel_defects", {}),
         )
         sunlight = Config().load().get("sunlight", False)
         if sunlight:
@@ -128,21 +130,24 @@ async def exposure_task(device_number: int, duration: float, light: bool):
 
         cabaret_telescope = cabaret.Telescope(
             focal_length=tel_state.get("focallength", 8.0),
-            diameter=tel_state.get("aperture", 0.2),
+            diameter=tel_state.get("aperturediameter", 0.2),
         )
 
         cabaret_observatory = cabaret.Observatory(
             camera=cabaret_camera, site=cabaret_site, telescope=cabaret_telescope
         )
 
+        bad_tracking = Config().load().get("bad_tracking", False)
+        if bad_tracking:
+            bad_tracking_rate = Config().load().get("bad_tracking_rate", 0.01)  # arcsec per second
+            last_slew_time = tel_state.get("last_slew_time", datetime.now(timezone.utc))
+            print("LAST_SLEW_TIME", last_slew_time)
+            # drift RA/Dec based on time since last slew
+            time_elapsed = (datetime.now(timezone.utc) - last_slew_time).total_seconds()
+            ra += time_elapsed * (bad_tracking_rate / 3600) / 15  # convert to hours
+            dec += time_elapsed * bad_tracking_rate / 3600
+
         # Generate star field image
-        # image_data = cabaret_observatory.generate_image(
-        #     ra=(ra / 24) * 360,
-        #     dec=dec,
-        #     exp_time=duration,
-        #     light=1 if light else 0,
-        # )
-        # In your exposure_task or wherever image is generated
         key = make_cache_key(
             ra, dec, duration, light, focuser_state.get("position", 0), sunlight=sunlight
         )
