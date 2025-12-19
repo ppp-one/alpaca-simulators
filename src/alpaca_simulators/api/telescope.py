@@ -15,6 +15,8 @@ from alpaca_simulators.state import (
     GuideDirections,
     IntResponse,
     PierSide,
+    Rate,
+    RateArrayResponse,
     StringArrayResponse,
     StringResponse,
     TelescopeAxes,
@@ -934,7 +936,7 @@ def abortslew(device_number: int = Path(..., ge=0), ClientTransactionID: int = F
     )
 
 
-@router.get("/telescope/{device_number}/axisrates", response_model=StringArrayResponse)
+@router.get("/telescope/{device_number}/axisrates", response_model=RateArrayResponse)
 def get_axisrates(
     device_number: int = Path(..., ge=0),
     Axis: int = Query(...),
@@ -951,8 +953,9 @@ def get_axisrates(
         raise AlpacaError(0x402, "Invalid axis")
 
     # Return available rates for the axis
-    rates = state.get(f"axis{Axis}rates", ["0.0", "1.0", "2.0"])
-    return StringArrayResponse(
+    rates = [state.get(f"axis{Axis}rates", None) or Rate()]
+
+    return RateArrayResponse(
         Value=rates,
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
