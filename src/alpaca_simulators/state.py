@@ -56,6 +56,25 @@ class DeviceStateResponse(AlpacaResponse):
     Value: dict[str, Any]
 
 
+class Rate(BaseModel):
+    """ "
+    https://ascom-standards.org/newdocs/rate.html#Rate
+    Describes a range of rates supported by the Telescope.MoveAxis() method (degrees/per second).
+    These are contained within the Telescope. AxisRates collection and serve to describe one or
+    more supported ranges of rates of motion about a mechanical axis.It is possible that the
+    Maximum and Minimum properties will be equal. In this case, the Rate object expresses a single
+    discrete rate. Both the Minimum and Maximum properties are always expressed in units of degrees
+    per second.
+    """
+
+    Maximum: float = 1.0
+    Minimum: float = 0.0
+
+
+class RateArrayResponse(AlpacaResponse):
+    Value: list[Rate]
+
+
 # ASCOM Enums
 class CameraStates:
     IDLE = 0
@@ -205,6 +224,10 @@ class TelescopeState(BaseModel):
     slewsettletime: float = 0.0
     # UTC date
     utcdate: str | None = None
+    # Axis rates
+    axis0rates: Rate = Rate()
+    axis1rates: Rate = Rate()
+    axis2rates: Rate = Rate()
 
 
 class DomeState(BaseModel):

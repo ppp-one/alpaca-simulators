@@ -25,7 +25,7 @@ version = "0.2.4"
 
 [project.optional-dependencies]
 dev = ["ruff", "pre-commit", "pytest"]
-test = ["pytest"]
+test = ["pytest", "httpx"]
 
 [project.scripts]
 alpaca-simulators = "alpaca_simulators.run_simulator:main"
