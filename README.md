@@ -23,25 +23,32 @@ A comprehensive simulator for ASCOM Alpaca devices that provides a RESTful API f
 - **Configurable Devices**: YAML-based configuration for all device properties
 - **Management API**: Standard Alpaca discovery and configuration endpoints
 
-## Installation
+## Quick Start
 
-Clone the repository:
+The fastest way to run the simulator is using [uv](https://docs.astral.sh/uv/).
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/ppp-one/alpaca-simulators
+   cd alpaca-simulators
+   ```
+
+2. **Run the simulator:**
+   ```bash
+   uv run alpaca-simulators
+   ```
+   *This will automatically install dependencies and start the server at `http://0.0.0.0:11111`.*
+
+## Configuration & Options
+
+The simulator supports several command-line arguments:
 
 ```bash
-git clone https://github.com/ppp-one/alpaca-simulators
-cd alpaca-simulators
-```
+# Run on a different port with auto-reload enabled
+uv run alpaca-simulators --port 8080 --reload
 
-Install the package:
-```bash
-pip install .
-```
-
-## Usage
-
-Run the simulator using:
-```bash
-alpaca-simulators --host 0.0.0.0 --port 11111
+# Use a specific configuration file
+uv run alpaca-simulators --config my_custom_setup.yaml
 ```
 
 ### API Endpoints
@@ -136,52 +143,6 @@ Contributions are welcome! Please ensure:
 - All device endpoints return proper Alpaca responses
 - Test interface updates work with the dynamic discovery system
 - Configuration changes are documented
-
-
-## Installation
-
-This project uses [uv](https://docs.astral.sh/uv/) for dependency management. First, install uv if you haven't already:
-
-```bash
-# On macOS and Linux
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# On Windows
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-
-```
-
-Then clone the repository:
-
-```bash
-git clone https://github.com/ppp-one/alpaca-simulators
-cd alpaca-simulators
-```
-
-### (Recommended) Create and activate a virtual environment with uv
-
-```bash
-uv venv .venv
-source .venv/bin/activate
-```
-
-### Install project
-
-```bash
-uv pip install .
-```
-
-### Run the simulator
-
-```bash
-uv run alpaca-simulators --host 0.0.0.0 --port 11111
-```
-
-For development with auto-reload:
-
-```bash
-uv run alpaca-simulators --host 0.0.0.0 --port 11111 --reload
-```
 
 ## License
 

@@ -21,14 +21,17 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-dev = [
-    { name = "pre-commit" },
-    { name = "pytest" },
-    { name = "ruff" },
-]
 test = [
     { name = "httpx" },
     { name = "pytest" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "httpx" },
+    { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "ruff" },
 ]
 
 [package.metadata]
@@ -37,15 +40,20 @@ requires-dist = [
     { name = "fastapi" },
     { name = "httpx", marker = "extra == 'test'" },
     { name = "jinja2" },
-    { name = "pre-commit", marker = "extra == 'dev'" },
-    { name = "pytest", marker = "extra == 'dev'" },
     { name = "pytest", marker = "extra == 'test'" },
     { name = "python-multipart" },
     { name = "pyyaml" },
-    { name = "ruff", marker = "extra == 'dev'" },
     { name = "uvicorn" },
 ]
-provides-extras = ["dev", "test"]
+provides-extras = ["test"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "httpx" },
+    { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
 
 [[package]]
 name = "annotated-doc"

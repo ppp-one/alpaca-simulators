@@ -2,9 +2,17 @@
 build-backend = "uv_build"
 requires = ["uv_build>=0.8.14,<0.9.0"]
 
+[dependency-groups]
+dev = [
+  "ruff",
+  "pre-commit",
+  "pytest",
+  "httpx"
+]
+
 [project]
 authors = [
-  {name = "Peter Pederson"},
+  {name = "Peter Pedersen"},
   {name = "David Degen"}
 ]
 dependencies = [
@@ -24,7 +32,6 @@ requires-python = ">=3.10"
 version = "0.2.4"
 
 [project.optional-dependencies]
-dev = ["ruff", "pre-commit", "pytest"]
 test = ["pytest", "httpx"]
 
 [project.scripts]
