@@ -105,8 +105,8 @@ async def exposure_task(device_number: int, duration: float, light: bool):
 
         # Initialise cabaret
         cabaret_camera = cabaret.Camera(
-            width=cam_state.get("numx"),
-            height=cam_state.get("numy"),
+            width=cam_state.get("numx") * cam_state.get("binx", 1),
+            height=cam_state.get("numy") * cam_state.get("biny", 1),
             bin_x=cam_state.get("binx", 1),
             bin_y=cam_state.get("biny", 1),
             pitch=cam_state.get("pixelsizex", 10.0),
@@ -143,7 +143,6 @@ async def exposure_task(device_number: int, duration: float, light: bool):
         if bad_tracking:
             bad_tracking_rate = Config().load().get("bad_tracking_rate", 0.01)  # arcsec per second
             last_slew_time = tel_state.get("last_slew_time", datetime.now(timezone.utc))
-            print("LAST_SLEW_TIME", last_slew_time)
             # drift RA/Dec based on time since last slew
             time_elapsed = (datetime.now(timezone.utc) - last_slew_time).total_seconds()
             ra += time_elapsed * (bad_tracking_rate / 3600) / 15  # convert to hours
