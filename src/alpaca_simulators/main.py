@@ -150,14 +150,14 @@ async def root():
         "version": "1.0.0",
         "description": "ASCOM Alpaca compatible device simulator",
         "api_docs": "/docs",
-        "test_interface": "/test",
+        "test_interface": "/test_interface",
         "management_api": "/management",
         "device_api": "/api/v1",
         "sunlight_control": "/sunlight",
     }
 
 
-@app.get("/test", response_class=HTMLResponse)
+@app.get("/test_interface", response_class=HTMLResponse)
 async def test_interface(request: Request):
     """Dynamic test interface for all devices"""
     # Discover available endpoints dynamically

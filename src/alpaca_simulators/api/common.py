@@ -112,13 +112,9 @@ async def set_connected(
     ClientTransactionID: int = Form(0),
     ClientID: int = Form(None),
 ):
-    print(f"Setting connected state for {device_type}:{device_number} to {Connected}")
     validate_device(device_type, device_number)
-    print(f"Connected state for {device_type}:{device_number} is {Connected}")
     connected_bool = Connected.lower() in ("true", "1", "yes", "on")
-    print(f"Connected boolean for {device_type}:{device_number} is {connected_bool}")
     update_device_state(device_type, device_number, {"connected": connected_bool})
-    print(f"Updated connected state for {device_type}:{device_number} to {connected_bool}")
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
