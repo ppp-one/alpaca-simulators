@@ -48,6 +48,40 @@ def degrees_to_hours(degrees):
     return degrees / 15.0
 
 
+def _advance_telescope_motion(device_number: int) -> None:
+    """Advance stored telescope coordinates based on elapsed wall-clock time."""
+    state = get_device_state("telescope", device_number)
+    now = datetime.now(timezone.utc).timestamp()
+    last_update = state.get("last_motion_update")
+
+    if last_update is None:
+        update_device_state("telescope", device_number, {"last_motion_update": now})
+        return
+
+    elapsed_seconds = now - last_update
+    if elapsed_seconds <= 0:
+        return
+
+    rightascension = normalize_hours(
+        state.get("rightascension", 0.0)
+        + elapsed_seconds * state.get("rightascensionrate", 0.0) / 54000.0
+    )
+    declination = normalize_degrees(
+        state.get("declination", 0.0)
+        + elapsed_seconds * state.get("declinationrate", 0.0) / 3600.0
+    )
+
+    update_device_state(
+        "telescope",
+        device_number,
+        {
+            "rightascension": rightascension,
+            "declination": declination,
+            "last_motion_update": now,
+        },
+    )
+
+
 @router.get("/telescope/{device_number}/alignmentmode", response_model=IntResponse)
 def get_alignmentmode(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
@@ -320,6 +354,7 @@ def get_canunpark(device_number: int = Path(..., ge=0), ClientTransactionID: int
 @router.get("/telescope/{device_number}/declination", response_model=DoubleResponse)
 def get_declination(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
+    _advance_telescope_motion(device_number)
     state = get_device_state("telescope", device_number)
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -348,12 +383,11 @@ def set_declinationrate(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    # state = get_device_state("telescope", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
-
+    _advance_telescope_motion(device_number)
     update_device_state("telescope", device_number, {"declinationrate": DeclinationRate})
+    update_device_state(
+        "telescope", device_number, {"last_motion_update": datetime.now(timezone.utc).timestamp()}
+    )
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -504,6 +538,7 @@ def get_ispulseguiding(device_number: int = Path(..., ge=0), ClientTransactionID
 @router.get("/telescope/{device_number}/rightascension", response_model=DoubleResponse)
 def get_rightascension(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
+    _advance_telescope_motion(device_number)
     state = get_device_state("telescope", device_number)
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -534,12 +569,20 @@ def set_rightascensionrate(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    # state = get_device_state("telescope", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
-
-    update_device_state("telescope", device_number, {"rightascensionrate": RightAscensionRate})
+    _advance_telescope_motion(device_number)
+    # Accept ASCOM-style RightAscensionRate (seconds of RA time per sidereal second)
+    # and convert to the simulator's internal units (arcseconds per sidereal second).
+    # 1 second of RA time == 15 arcseconds.
+    ra_rate_as_seconds_of_time = RightAscensionRate
+    ra_rate_arcsec_per_sidereal = ra_rate_as_seconds_of_time * 15.0
+    update_device_state(
+        "telescope",
+        device_number,
+        {"rightascensionrate": ra_rate_arcsec_per_sidereal},
+    )
+    update_device_state(
+        "telescope", device_number, {"last_motion_update": datetime.now(timezone.utc).timestamp()}
+    )
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,

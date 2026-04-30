@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -125,3 +127,44 @@ class TestTelescope:
         assert response.status_code == 200
         data = response.json()
         assert data["Value"] == [{"Maximum": 1.0, "Minimum": 0.0}]  # Default rates
+
+    def test_rightascensionrate_advances_rightascension(self, setup_telescope_state):
+        """Test that RightAscensionRate advances the stored right ascension over time."""
+        update_device_state(
+            "telescope",
+            0,
+            {
+                "rightascension": 1.0,
+                # internal simulator units are arcseconds per sidereal second
+                # 15 s-of-RA -> 15 * 15 = 225 arcsec/s
+                "rightascensionrate": 225.0,
+                "declination": 0.0,
+                "declinationrate": 0.0,
+                "last_motion_update": time.time() - 2.0,
+            },
+        )
+
+        response = client.get(f"{base_api_path}/0/rightascension", params={"ClientTransactionID": 1})
+        assert response.status_code == 200
+
+        expected_ra = 1.0 + (2.0 * 225.0) / 54000.0
+        assert response.json()["Value"] == pytest.approx(expected_ra, abs=1e-4)
+
+    def test_declinationrate_advances_declination(self, setup_telescope_state):
+        """Test that DeclinationRate advances the stored declination over time."""
+        update_device_state(
+            "telescope",
+            0,
+            {
+                "rightascension": 0.0,
+                "rightascensionrate": 0.0,
+                "declination": 10.0,
+                "declinationrate": 3600.0,
+                "last_motion_update": time.time() - 2.0,
+            },
+        )
+
+        response = client.get(f"{base_api_path}/0/declination", params={"ClientTransactionID": 2})
+        assert response.status_code == 200
+
+        assert response.json()["Value"] == pytest.approx(12.0, abs=5e-2)
