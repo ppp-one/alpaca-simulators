@@ -1013,7 +1013,7 @@ def get_axisrates(
         TelescopeAxes.SECONDARY,
         TelescopeAxes.TERTIARY,
     ]:
-        raise AlpacaError(0x402, "Invalid axis")
+        raise AlpacaError(0x401, "Invalid axis")
 
     # Return available rates for the axis
     rates = [state.get(f"axis{Axis}rates", None) or Rate()]
@@ -1039,7 +1039,7 @@ def get_canmoveaxis(
         TelescopeAxes.SECONDARY,
         TelescopeAxes.TERTIARY,
     ]:
-        raise AlpacaError(0x402, "Invalid axis")
+        raise AlpacaError(0x401, "Invalid axis")
 
     can_move = state.get(f"canmoveaxis{Axis}", True)
     return BoolResponse(
