@@ -137,7 +137,10 @@ class TestTelescope:
                 "rightascension": 1.0,
                 # ASCOM RightAscensionRate unit: seconds of RA per sidereal second.
                 # Advance formula: elapsed_s * rate / 3600 = change in RA hours.
+                # tracking=True is required; rates are offsets from sidereal and
+                # are only applied when the mount is tracking.
                 "rightascensionrate": 225.0,
+                "tracking": True,
                 "declination": 0.0,
                 "declinationrate": 0.0,
                 "last_motion_update": time.time() - 2.0,
@@ -160,6 +163,7 @@ class TestTelescope:
             {
                 "rightascension": 0.0,
                 "rightascensionrate": 0.0,
+                "tracking": True,
                 "declination": 10.0,
                 "declinationrate": 3600.0,
                 "last_motion_update": time.time() - 2.0,

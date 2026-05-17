@@ -77,14 +77,21 @@ def _advance_telescope_motion(device_number: int) -> None:
     if elapsed_seconds <= 0:
         return
 
-    rightascension = normalize_hours(
-        state.get("rightascension", 0.0)
-        + elapsed_seconds * state.get("rightascensionrate", 0.0) / 3600.0
-    )
-    declination = normalize_degrees(
-        state.get("declination", 0.0)
-        + elapsed_seconds * state.get("declinationrate", 0.0) / 3600.0
-    )
+    # When tracking is on, RightAscensionRate and DeclinationRate are offsets from
+    # sidereal tracking. The mount compensates for Earth's rotation, so RA only
+    # changes by the offset rate.
+    # When tracking is off, the mount is stationary and RA drifts at the full sidereal
+    # rate (24 RA-hours per sidereal day = 86164.0905 s). Rate offsets are ignored.
+    _SIDEREAL_RATE_RA_H_PER_S = 24.0 / 86164.0905
+    if state.get("tracking", False):
+        ra_rate = state.get("rightascensionrate", 0.0) / 3600.0  # RA-hours/s
+        dec_rate = state.get("declinationrate", 0.0) / 3600.0  # degrees/s
+    else:
+        ra_rate = _SIDEREAL_RATE_RA_H_PER_S
+        dec_rate = 0.0
+
+    rightascension = normalize_hours(state.get("rightascension", 0.0) + elapsed_seconds * ra_rate)
+    declination = normalize_degrees(state.get("declination", 0.0) + elapsed_seconds * dec_rate)
 
     update_device_state(
         "telescope",

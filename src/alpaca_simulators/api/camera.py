@@ -29,8 +29,10 @@ router = APIRouter()
 image_cache = {}
 
 
-def make_cache_key(ra, dec, duration, light, focus, sunlight):
-    return f"{ra}_{dec}_{duration}_{light}_{focus}_{sunlight}"
+def make_cache_key(ra, dec, duration, light, focus, sunlight, tracking_ra_rate, tracking_dec_rate):
+    return (
+        f"{ra}_{dec}_{duration}_{light}_{focus}_{sunlight}_{tracking_ra_rate}_{tracking_dec_rate}"
+    )
 
 
 async def bytes_generator(image_array, numx, numy):
@@ -148,19 +150,44 @@ async def exposure_task(device_number: int, duration: float, light: bool):
             ra += time_elapsed * (bad_tracking_rate / 3600) / 15  # convert to hours
             dec += time_elapsed * bad_tracking_rate / 3600
 
+        # Convert ASCOM tracking rates to arcseconds per second for cabaret.
+        # RightAscensionRate and DeclinationRate are ASCOM offsets from sidereal tracking.
+        # The pointing coordinates (ra/dec) already account for sidereal drift via
+        # _advance_telescope_motion in telescope.py, so only the rate offsets are passed
+        # here to simulate trailing from non-sidereal tracking.
+        # rightascensionrate is RA-seconds/sidereal-second; × 15 converts to arcsec/s.
+        # declinationrate is already arcseconds/sidereal-second ≈ arcsec/s.
+        if tel_state.get("tracking", False):
+            tracking_ra_rate = tel_state.get("rightascensionrate", 0.0) * 15.0
+            tracking_dec_rate = tel_state.get("declinationrate", 0.0)
+        else:
+            tracking_ra_rate = 0.0
+            tracking_dec_rate = 0.0
+
         # Generate star field image
         key = make_cache_key(
-            ra, dec, duration, light, focuser_state.get("position", 0), sunlight=sunlight
+            ra,
+            dec,
+            duration,
+            light,
+            focuser_state.get("position", 0),
+            sunlight=sunlight,
+            tracking_ra_rate=tracking_ra_rate,
+            tracking_dec_rate=tracking_dec_rate,
         )
         if key in image_cache:
+            print(f"Using cached image for key: {key}")
             image_data = image_cache[key]
         else:
+            print(f"Generating new image for key: {key}")
             image_data = cabaret_observatory.generate_image(
                 ra=(ra / 24) * 360,
                 dec=dec,
                 exp_time=duration,
                 light=1 if light else 0,
                 timeout=Config().load().get("gaia_query_timeout", 30),
+                tracking_ra_rate=tracking_ra_rate,
+                tracking_dec_rate=tracking_dec_rate,
             )
             image_cache[key] = image_data
 

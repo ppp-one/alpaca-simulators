@@ -164,11 +164,9 @@ async def test_interface(request: Request):
     endpoints = discover_device_endpoints(app)
 
     return templates.TemplateResponse(
+        request,
         "index2.html.j2",
-        {
-            "request": request,
-            "endpoints": endpoints,
-        },
+        {"endpoints": endpoints},
     )
 
 
