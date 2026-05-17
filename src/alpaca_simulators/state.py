@@ -200,8 +200,8 @@ class TelescopeState(BaseModel):
     declination: float = 0.0
     altitude: float = 0.0
     azimuth: float = 0.0
-    targetrightascension: float = 0.0
-    targetdeclination: float = 0.0
+    targetrightascension: float | None = None
+    targetdeclination: float | None = None
     tracking: bool = False
     slewing: bool = False
     athome: bool = False
