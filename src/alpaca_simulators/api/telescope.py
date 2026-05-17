@@ -1,4 +1,5 @@
 import math
+import threading
 from datetime import datetime, timezone
 from time import sleep
 
@@ -13,11 +14,11 @@ from alpaca_simulators.state import (
     DriveRates,
     EquatorialCoordinateType,
     GuideDirections,
+    IntArrayResponse,
     IntResponse,
     PierSide,
     Rate,
     RateArrayResponse,
-    StringArrayResponse,
     StringResponse,
     TelescopeAxes,
     get_device_state,
@@ -26,6 +27,20 @@ from alpaca_simulators.state import (
 )
 
 router = APIRouter()
+
+_SLEW_DURATION = 3.0  # seconds – simulated slew time for async methods
+
+
+def _complete_slew(device_number: int) -> None:
+    """Background thread: mark slew complete after the simulated slew duration."""
+    sleep(_SLEW_DURATION)
+    update_device_state("telescope", device_number, {"slewing": False})
+
+
+def _complete_pulseguide(device_number: int, delay_seconds: float) -> None:
+    """Background thread: reset IsPulseGuiding after the guide duration expires."""
+    sleep(delay_seconds)
+    update_device_state("telescope", device_number, {"ispulseguiding": False})
 
 
 def normalize_hours(hours):
@@ -46,6 +61,47 @@ def hours_to_degrees(hours):
 def degrees_to_hours(degrees):
     """Convert degrees to hours"""
     return degrees / 15.0
+
+
+def _advance_telescope_motion(device_number: int) -> None:
+    """Advance stored telescope coordinates based on elapsed wall-clock time."""
+    state = get_device_state("telescope", device_number)
+    now = datetime.now(timezone.utc).timestamp()
+    last_update = state.get("last_motion_update")
+
+    if last_update is None:
+        update_device_state("telescope", device_number, {"last_motion_update": now})
+        return
+
+    elapsed_seconds = now - last_update
+    if elapsed_seconds <= 0:
+        return
+
+    # When tracking is on, RightAscensionRate and DeclinationRate are offsets from
+    # sidereal tracking. The mount compensates for Earth's rotation, so RA only
+    # changes by the offset rate.
+    # When tracking is off, the mount is stationary and RA drifts at the full sidereal
+    # rate (24 RA-hours per sidereal day = 86164.0905 s). Rate offsets are ignored.
+    _SIDEREAL_RATE_RA_H_PER_S = 24.0 / 86164.0905
+    if state.get("tracking", False):
+        ra_rate = state.get("rightascensionrate", 0.0) / 3600.0  # RA-hours/s
+        dec_rate = state.get("declinationrate", 0.0) / 3600.0  # degrees/s
+    else:
+        ra_rate = _SIDEREAL_RATE_RA_H_PER_S
+        dec_rate = 0.0
+
+    rightascension = normalize_hours(state.get("rightascension", 0.0) + elapsed_seconds * ra_rate)
+    declination = normalize_degrees(state.get("declination", 0.0) + elapsed_seconds * dec_rate)
+
+    update_device_state(
+        "telescope",
+        device_number,
+        {
+            "rightascension": rightascension,
+            "declination": declination,
+            "last_motion_update": now,
+        },
+    )
 
 
 @router.get("/telescope/{device_number}/alignmentmode", response_model=IntResponse)
@@ -320,6 +376,7 @@ def get_canunpark(device_number: int = Path(..., ge=0), ClientTransactionID: int
 @router.get("/telescope/{device_number}/declination", response_model=DoubleResponse)
 def get_declination(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
+    _advance_telescope_motion(device_number)
     state = get_device_state("telescope", device_number)
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -348,12 +405,15 @@ def set_declinationrate(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    # state = get_device_state("telescope", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
-
-    update_device_state("telescope", device_number, {"declinationrate": DeclinationRate})
+    _advance_telescope_motion(device_number)
+    update_device_state(
+        "telescope",
+        device_number,
+        {
+            "declinationrate": DeclinationRate,
+            "last_motion_update": datetime.now(timezone.utc).timestamp(),
+        },
+    )
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -504,6 +564,7 @@ def get_ispulseguiding(device_number: int = Path(..., ge=0), ClientTransactionID
 @router.get("/telescope/{device_number}/rightascension", response_model=DoubleResponse)
 def get_rightascension(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
+    _advance_telescope_motion(device_number)
     state = get_device_state("telescope", device_number)
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
@@ -534,12 +595,15 @@ def set_rightascensionrate(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    # state = get_device_state("telescope", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
-
-    update_device_state("telescope", device_number, {"rightascensionrate": RightAscensionRate})
+    _advance_telescope_motion(device_number)
+    update_device_state(
+        "telescope",
+        device_number,
+        {
+            "rightascensionrate": RightAscensionRate,
+            "last_motion_update": datetime.now(timezone.utc).timestamp(),
+        },
+    )
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -621,6 +685,9 @@ def set_siteelevation(
 ):
     validate_device("telescope", device_number)
 
+    if SiteElevation < -300.0 or SiteElevation > 10000.0:
+        raise AlpacaError(0x401, "Site elevation must be between -300 and +10000 metres")
+
     update_device_state("telescope", device_number, {"siteelevation": SiteElevation})
 
     return AlpacaResponse(
@@ -649,7 +716,7 @@ def set_sitelatitude(
     validate_device("telescope", device_number)
 
     if SiteLatitude < -90.0 or SiteLatitude > 90.0:
-        raise AlpacaError(0x402, "Latitude must be between -90 and +90 degrees")
+        raise AlpacaError(0x401, "Latitude must be between -90 and +90 degrees")
 
     update_device_state("telescope", device_number, {"sitelatitude": SiteLatitude})
 
@@ -679,7 +746,7 @@ def set_sitelongitude(
     validate_device("telescope", device_number)
 
     if SiteLongitude < -180.0 or SiteLongitude > 180.0:
-        raise AlpacaError(0x402, "Longitude must be between -180 and +180 degrees")
+        raise AlpacaError(0x401, "Longitude must be between -180 and +180 degrees")
 
     update_device_state("telescope", device_number, {"sitelongitude": SiteLongitude})
 
@@ -700,12 +767,12 @@ def get_slewing(device_number: int = Path(..., ge=0), ClientTransactionID: int =
     )
 
 
-@router.get("/telescope/{device_number}/slewsettletime", response_model=DoubleResponse)
+@router.get("/telescope/{device_number}/slewsettletime", response_model=IntResponse)
 def get_slewsettletime(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
-    return DoubleResponse(
-        Value=state.get("slewsettletime", 0.0),
+    return IntResponse(
+        Value=int(state.get("slewsettletime", 0)),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -714,7 +781,7 @@ def get_slewsettletime(device_number: int = Path(..., ge=0), ClientTransactionID
 @router.put("/telescope/{device_number}/slewsettletime", response_model=AlpacaResponse)
 def set_slewsettletime(
     device_number: int = Path(..., ge=0),
-    SlewSettleTime: float = Form(...),
+    SlewSettleTime: int = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
@@ -723,8 +790,8 @@ def set_slewsettletime(
     # if not state.get("connected"):
     # raise AlpacaError(0x407, "Device is not connected")
 
-    if SlewSettleTime < 0.0:
-        raise AlpacaError(0x402, "Slew settle time cannot be negative")
+    if SlewSettleTime < 0:
+        raise AlpacaError(0x401, "Slew settle time cannot be negative")
 
     update_device_state("telescope", device_number, {"slewsettletime": SlewSettleTime})
 
@@ -740,8 +807,11 @@ def get_targetdeclination(
 ):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
+    value = state.get("targetdeclination")
+    if value is None:
+        raise AlpacaError(0x402, "Target declination has not been set")
     return DoubleResponse(
-        Value=state.get("targetdeclination", 0.0),
+        Value=value,
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -760,7 +830,7 @@ def set_targetdeclination(
     # raise AlpacaError(0x407, "Device is not connected")
 
     if TargetDeclination < -90.0 or TargetDeclination > 90.0:
-        raise AlpacaError(0x402, "Declination must be between -90 and +90 degrees")
+        raise AlpacaError(0x401, "Declination must be between -90 and +90 degrees")
 
     update_device_state("telescope", device_number, {"targetdeclination": TargetDeclination})
 
@@ -776,8 +846,11 @@ def get_targetrightascension(
 ):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
+    value = state.get("targetrightascension")
+    if value is None:
+        raise AlpacaError(0x402, "Target right ascension has not been set")
     return DoubleResponse(
-        Value=state.get("targetrightascension", 0.0),
+        Value=value,
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -796,7 +869,7 @@ def set_targetrightascension(
     # raise AlpacaError(0x407, "Device is not connected")
 
     if TargetRightAscension < 0.0 or TargetRightAscension >= 24.0:
-        raise AlpacaError(0x402, "Right ascension must be between 0 and 24 hours")
+        raise AlpacaError(0x401, "Right ascension must be between 0 and 24 hours")
 
     update_device_state("telescope", device_number, {"targetrightascension": TargetRightAscension})
 
@@ -867,7 +940,7 @@ def set_trackingrate(
         DriveRates.KING,
     ]
     if TrackingRate not in valid_rates:
-        raise AlpacaError(0x402, "Invalid tracking rate")
+        raise AlpacaError(0x401, "Invalid tracking rate")
 
     update_device_state("telescope", device_number, {"trackingrate": TrackingRate})
 
@@ -877,13 +950,11 @@ def set_trackingrate(
     )
 
 
-@router.get("/telescope/{device_number}/trackingrates", response_model=StringArrayResponse)
+@router.get("/telescope/{device_number}/trackingrates", response_model=IntArrayResponse)
 def get_trackingrates(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
-    state = get_device_state("telescope", device_number)
-    rates = state.get("trackingrates", ["0", "1", "2", "3"])  # Sidereal, Lunar, Solar, King
-    return StringArrayResponse(
-        Value=rates,
+    return IntArrayResponse(
+        Value=[DriveRates.SIDEREAL, DriveRates.LUNAR, DriveRates.SOLAR, DriveRates.KING],
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -894,7 +965,7 @@ def get_utcdate(device_number: int = Path(..., ge=0), ClientTransactionID: int =
     validate_device("telescope", device_number)
     utc_now = datetime.now(timezone.utc)
     return StringResponse(
-        Value=utc_now.isoformat(),
+        Value=utc_now.strftime("%Y-%m-%dT%H:%M:%S.%f") + "Z",
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -923,10 +994,9 @@ def set_utcdate(
 @router.put("/telescope/{device_number}/abortslew", response_model=AlpacaResponse)
 def abortslew(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("telescope", device_number)
-    # state = get_device_state("telescope", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
+    state = get_device_state("telescope", device_number)
+    if state.get("atpark", False):
+        raise AlpacaError(0x408, "Telescope is parked")
 
     update_device_state("telescope", device_number, {"slewing": False})
 
@@ -950,7 +1020,7 @@ def get_axisrates(
         TelescopeAxes.SECONDARY,
         TelescopeAxes.TERTIARY,
     ]:
-        raise AlpacaError(0x402, "Invalid axis")
+        raise AlpacaError(0x401, "Invalid axis")
 
     # Return available rates for the axis
     rates = [state.get(f"axis{Axis}rates", None) or Rate()]
@@ -976,7 +1046,7 @@ def get_canmoveaxis(
         TelescopeAxes.SECONDARY,
         TelescopeAxes.TERTIARY,
     ]:
-        raise AlpacaError(0x402, "Invalid axis")
+        raise AlpacaError(0x401, "Invalid axis")
 
     can_move = state.get(f"canmoveaxis{Axis}", True)
     return BoolResponse(
@@ -1012,10 +1082,9 @@ def get_destinationsideofpier(
 @router.put("/telescope/{device_number}/findhome", response_model=AlpacaResponse)
 def findhome(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("telescope", device_number)
-    # state = get_device_state("telescope", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
+    state = get_device_state("telescope", device_number)
+    if state.get("atpark", False):
+        raise AlpacaError(0x408, "Telescope is parked")
 
     update_device_state(
         "telescope",
@@ -1037,20 +1106,30 @@ def moveaxis(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    # state = get_device_state("telescope", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
+    state = get_device_state("telescope", device_number)
+    if state.get("atpark", False):
+        raise AlpacaError(0x408, "Telescope is parked")
 
     if Axis not in [
         TelescopeAxes.PRIMARY,
         TelescopeAxes.SECONDARY,
         TelescopeAxes.TERTIARY,
     ]:
-        raise AlpacaError(0x402, "Invalid axis")
+        raise AlpacaError(0x401, "Invalid axis")
 
-    # Store the axis movement rate
-    update_device_state("telescope", device_number, {f"axis{Axis}rate": Rate})
+    # Validate rate against supported axis rates (Rate=0 always valid)
+    if Rate != 0.0:
+        axis_rates = state.get(f"axis{Axis}rates", {"Maximum": 1.0, "Minimum": 0.0})
+        max_rate = axis_rates["Maximum"] if isinstance(axis_rates, dict) else axis_rates.Maximum
+        if abs(Rate) > max_rate:
+            raise AlpacaError(0x401, "Rate is outside the valid range for this axis")
+
+    # Store the axis movement rate and update slewing state
+    update_device_state(
+        "telescope",
+        device_number,
+        {f"axis{Axis}rate": Rate, "slewing": Rate != 0.0},
+    )
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -1096,10 +1175,9 @@ def pulseguide(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    # state = get_device_state("telescope", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
+    state = get_device_state("telescope", device_number)
+    if state.get("atpark", False):
+        raise AlpacaError(0x408, "Telescope is parked")
 
     if Direction not in [
         GuideDirections.NORTH,
@@ -1112,7 +1190,6 @@ def pulseguide(
     if Duration < 0:
         raise AlpacaError(0x402, "Duration must be positive")
 
-    state = get_device_state("telescope", device_number)
     RightAscension = state.get("rightascension", 0.0)
     Declination = state.get("declination", 0.0)
 
@@ -1132,15 +1209,16 @@ def pulseguide(
         {
             "rightascension": RightAscension,
             "declination": Declination,
+            "ispulseguiding": True,
         },
     )
 
-    # Simulate pulse guiding
-    update_device_state("telescope", device_number, {"ispulseguiding": True})
-
-    # In a real implementation, this would start a timer
-    # For simulation, we immediately stop pulse guiding
-    update_device_state("telescope", device_number, {"ispulseguiding": False})
+    # Reset IsPulseGuiding asynchronously after the guide duration expires
+    threading.Thread(
+        target=_complete_pulseguide,
+        args=(device_number, Duration / 1000.0),
+        daemon=True,
+    ).start()
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -1180,16 +1258,15 @@ def slewtoaltaz(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    # state = get_device_state("telescope", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
+    state = get_device_state("telescope", device_number)
+    if state.get("atpark", False):
+        raise AlpacaError(0x408, "Telescope is parked")
 
     if Altitude < 0.0 or Altitude > 90.0:
-        raise AlpacaError(0x402, "Altitude must be between 0 and 90 degrees")
+        raise AlpacaError(0x401, "Altitude must be between 0 and 90 degrees")
 
-    if Azimuth < 0.0 or Azimuth >= 360.0:
-        raise AlpacaError(0x402, "Azimuth must be between 0 and 360 degrees")
+    if Azimuth < 0.0 or Azimuth > 360.0:
+        raise AlpacaError(0x401, "Azimuth must be between 0 and 360 degrees")
 
     update_device_state(
         "telescope",
@@ -1216,22 +1293,24 @@ def slewtoaltazasync(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    # state = get_device_state("telescope", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
+    state = get_device_state("telescope", device_number)
+    if state.get("atpark", False):
+        raise AlpacaError(0x408, "Telescope is parked")
 
     if Altitude < 0.0 or Altitude > 90.0:
-        raise AlpacaError(0x402, "Altitude must be between 0 and 90 degrees")
+        raise AlpacaError(0x401, "Altitude must be between 0 and 90 degrees")
 
-    if Azimuth < 0.0 or Azimuth >= 360.0:
-        raise AlpacaError(0x402, "Azimuth must be between 0 and 360 degrees")
+    if Azimuth < 0.0 or Azimuth > 360.0:
+        raise AlpacaError(0x401, "Azimuth must be between 0 and 360 degrees")
 
     # Start async slew
-    update_device_state("telescope", device_number, {"slewing": True, "atpark": False})
+    update_device_state(
+        "telescope",
+        device_number,
+        {"azimuth": Azimuth, "altitude": Altitude, "slewing": True, "atpark": False},
+    )
 
-    # In a real implementation, this would start a background task
-    # For simulation, we set the final position immediately but keep slewing=True briefly
+    threading.Thread(target=_complete_slew, args=(device_number,), daemon=True).start()
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -1247,16 +1326,15 @@ def slewtocoordinates(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    # state = get_device_state("telescope", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
+    state = get_device_state("telescope", device_number)
+    if state.get("atpark", False):
+        raise AlpacaError(0x408, "Telescope is parked")
 
     if RightAscension < 0.0 or RightAscension >= 24.0:
-        raise AlpacaError(0x402, "Right ascension must be between 0 and 24 hours")
+        raise AlpacaError(0x401, "Right ascension must be between 0 and 24 hours")
 
     if Declination < -90.0 or Declination > 90.0:
-        raise AlpacaError(0x402, "Declination must be between -90 and +90 degrees")
+        raise AlpacaError(0x401, "Declination must be between -90 and +90 degrees")
 
     update_device_state(
         "telescope",
@@ -1285,42 +1363,31 @@ def slewtocoordinatesasync(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    # state = get_device_state("telescope", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
+    state = get_device_state("telescope", device_number)
+    if state.get("atpark", False):
+        raise AlpacaError(0x408, "Telescope is parked")
 
     if RightAscension < 0.0 or RightAscension >= 24.0:
-        raise AlpacaError(0x402, "Right ascension must be between 0 and 24 hours")
+        raise AlpacaError(0x401, "Right ascension must be between 0 and 24 hours")
 
     if Declination < -90.0 or Declination > 90.0:
-        raise AlpacaError(0x402, "Declination must be between -90 and +90 degrees")
+        raise AlpacaError(0x401, "Declination must be between -90 and +90 degrees")
 
-    # Start async slew
+    # Set position and targets immediately, flag as slewing, return without blocking
     update_device_state(
         "telescope",
         device_number,
         {
             "rightascension": RightAscension,
             "declination": Declination,
+            "targetrightascension": RightAscension,
+            "targetdeclination": Declination,
             "slewing": True,
             "atpark": False,
-            "last_slew_time": datetime.now(timezone.utc),
         },
     )
 
-    sleep(3)
-
-    update_device_state(
-        "telescope",
-        device_number,
-        {
-            "rightascension": RightAscension,
-            "declination": Declination,
-            "slewing": False,
-            "atpark": False,
-        },
-    )
+    threading.Thread(target=_complete_slew, args=(device_number,), daemon=True).start()
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -1332,9 +1399,8 @@ def slewtocoordinatesasync(
 def slewtotarget(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
+    if state.get("atpark", False):
+        raise AlpacaError(0x408, "Telescope is parked")
 
     target_ra = state.get("targetrightascension")
     target_dec = state.get("targetdeclination")
@@ -1363,9 +1429,8 @@ def slewtotarget(device_number: int = Path(..., ge=0), ClientTransactionID: int 
 def slewtotargetasync(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
+    if state.get("atpark", False):
+        raise AlpacaError(0x408, "Telescope is parked")
 
     target_ra = state.get("targetrightascension")
     target_dec = state.get("targetdeclination")
@@ -1373,8 +1438,19 @@ def slewtotargetasync(device_number: int = Path(..., ge=0), ClientTransactionID:
     if target_ra is None or target_dec is None:
         raise AlpacaError(0x402, "Target coordinates not set")
 
-    # Start async slew
-    update_device_state("telescope", device_number, {"slewing": True, "atpark": False})
+    # Set final position immediately, flag as slewing, return without blocking
+    update_device_state(
+        "telescope",
+        device_number,
+        {
+            "rightascension": target_ra,
+            "declination": target_dec,
+            "slewing": True,
+            "atpark": False,
+        },
+    )
+
+    threading.Thread(target=_complete_slew, args=(device_number,), daemon=True).start()
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -1390,16 +1466,15 @@ def synctoaltaz(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    # state = get_device_state("telescope", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
+    state = get_device_state("telescope", device_number)
+    if state.get("atpark", False):
+        raise AlpacaError(0x408, "Telescope is parked")
 
     if Altitude < 0.0 or Altitude > 90.0:
-        raise AlpacaError(0x402, "Altitude must be between 0 and 90 degrees")
+        raise AlpacaError(0x401, "Altitude must be between 0 and 90 degrees")
 
-    if Azimuth < 0.0 or Azimuth >= 360.0:
-        raise AlpacaError(0x402, "Azimuth must be between 0 and 360 degrees")
+    if Azimuth < 0.0 or Azimuth > 360.0:
+        raise AlpacaError(0x401, "Azimuth must be between 0 and 360 degrees")
 
     update_device_state("telescope", device_number, {"azimuth": Azimuth, "altitude": Altitude})
 
@@ -1417,21 +1492,25 @@ def synctocoordinates(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("telescope", device_number)
-    # state = get_device_state("telescope", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
+    state = get_device_state("telescope", device_number)
+    if state.get("atpark", False):
+        raise AlpacaError(0x408, "Telescope is parked")
 
     if RightAscension < 0.0 or RightAscension >= 24.0:
-        raise AlpacaError(0x402, "Right ascension must be between 0 and 24 hours")
+        raise AlpacaError(0x401, "Right ascension must be between 0 and 24 hours")
 
     if Declination < -90.0 or Declination > 90.0:
-        raise AlpacaError(0x402, "Declination must be between -90 and +90 degrees")
+        raise AlpacaError(0x401, "Declination must be between -90 and +90 degrees")
 
     update_device_state(
         "telescope",
         device_number,
-        {"rightascension": RightAscension, "declination": Declination},
+        {
+            "rightascension": RightAscension,
+            "declination": Declination,
+            "targetrightascension": RightAscension,
+            "targetdeclination": Declination,
+        },
     )
 
     return AlpacaResponse(
@@ -1444,9 +1523,8 @@ def synctocoordinates(
 def synctotarget(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
+    if state.get("atpark", False):
+        raise AlpacaError(0x408, "Telescope is parked")
 
     target_ra = state.get("targetrightascension")
     target_dec = state.get("targetdeclination")

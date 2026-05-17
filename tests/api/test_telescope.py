@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -80,7 +82,7 @@ class TestTelescope:
         )
         assert response.status_code == 200  # Alpaca returns 200 for errors
         data = response.json()
-        assert data["ErrorNumber"] == 0x402
+        assert data["ErrorNumber"] == 0x401
         assert "Invalid axis" in data["ErrorMessage"]
         assert data["ClientTransactionID"] == transaction_id
 
@@ -125,3 +127,52 @@ class TestTelescope:
         assert response.status_code == 200
         data = response.json()
         assert data["Value"] == [{"Maximum": 1.0, "Minimum": 0.0}]  # Default rates
+
+    def test_rightascensionrate_advances_rightascension(self, setup_telescope_state):
+        """Test that RightAscensionRate advances the stored right ascension over time."""
+        update_device_state(
+            "telescope",
+            0,
+            {
+                "rightascension": 1.0,
+                # ASCOM RightAscensionRate unit: seconds of RA per sidereal second.
+                # Advance formula: elapsed_s * rate / 3600 = change in RA hours.
+                # tracking=True is required; rates are offsets from sidereal and
+                # are only applied when the mount is tracking.
+                "rightascensionrate": 225.0,
+                "tracking": True,
+                "declination": 0.0,
+                "declinationrate": 0.0,
+                "last_motion_update": time.time() - 2.0,
+            },
+        )
+
+        response = client.get(
+            f"{base_api_path}/0/rightascension", params={"ClientTransactionID": 1}
+        )
+        assert response.status_code == 200
+
+        expected_ra = 1.0 + (2.0 * 225.0) / 3600.0
+        # Tolerance of 5e-3 RA-hours accommodates ~80 ms of test overhead at this rate
+        # (225/3600 ≈ 0.0625 RA-hours/s). The previous 1e-4 only allowed ~1.6 ms.
+        assert response.json()["Value"] == pytest.approx(expected_ra, abs=5e-3)
+
+    def test_declinationrate_advances_declination(self, setup_telescope_state):
+        """Test that DeclinationRate advances the stored declination over time."""
+        update_device_state(
+            "telescope",
+            0,
+            {
+                "rightascension": 0.0,
+                "rightascensionrate": 0.0,
+                "tracking": True,
+                "declination": 10.0,
+                "declinationrate": 3600.0,
+                "last_motion_update": time.time() - 2.0,
+            },
+        )
+
+        response = client.get(f"{base_api_path}/0/declination", params={"ClientTransactionID": 2})
+        assert response.status_code == 200
+
+        assert response.json()["Value"] == pytest.approx(12.0, abs=5e-2)
