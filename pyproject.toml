@@ -43,7 +43,7 @@ Homepage = "https://github.com/ppp-one/alpaca-simulators"
 Source = "https://github.com/ppp-one/alpaca-simulators"
 
 [tool.ruff]
-exclude = ["*.yaml"]
+exclude = ["uv.lock", "*.yaml"]
 extend-include = ["*.ipynb"]
 line-length = 99
 
