@@ -82,7 +82,7 @@ class TestTelescope:
         )
         assert response.status_code == 200  # Alpaca returns 200 for errors
         data = response.json()
-        assert data["ErrorNumber"] == 0x402
+        assert data["ErrorNumber"] == 0x401
         assert "Invalid axis" in data["ErrorMessage"]
         assert data["ClientTransactionID"] == transaction_id
 
@@ -135,8 +135,8 @@ class TestTelescope:
             0,
             {
                 "rightascension": 1.0,
-                # internal simulator units are arcseconds per sidereal second
-                # 15 s-of-RA -> 15 * 15 = 225 arcsec/s
+                # ASCOM RightAscensionRate unit: seconds of RA per sidereal second.
+                # Advance formula: elapsed_s * rate / 3600 = change in RA hours.
                 "rightascensionrate": 225.0,
                 "declination": 0.0,
                 "declinationrate": 0.0,
@@ -144,10 +144,12 @@ class TestTelescope:
             },
         )
 
-        response = client.get(f"{base_api_path}/0/rightascension", params={"ClientTransactionID": 1})
+        response = client.get(
+            f"{base_api_path}/0/rightascension", params={"ClientTransactionID": 1}
+        )
         assert response.status_code == 200
 
-        expected_ra = 1.0 + (2.0 * 225.0) / 54000.0
+        expected_ra = 1.0 + (2.0 * 225.0) / 3600.0
         assert response.json()["Value"] == pytest.approx(expected_ra, abs=1e-4)
 
     def test_declinationrate_advances_declination(self, setup_telescope_state):
