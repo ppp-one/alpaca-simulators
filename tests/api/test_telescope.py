@@ -153,7 +153,9 @@ class TestTelescope:
         assert response.status_code == 200
 
         expected_ra = 1.0 + (2.0 * 225.0) / 3600.0
-        assert response.json()["Value"] == pytest.approx(expected_ra, abs=1e-4)
+        # Tolerance of 5e-3 RA-hours accommodates ~80 ms of test overhead at this rate
+        # (225/3600 ≈ 0.0625 RA-hours/s). The previous 1e-4 only allowed ~1.6 ms.
+        assert response.json()["Value"] == pytest.approx(expected_ra, abs=5e-3)
 
     def test_declinationrate_advances_declination(self, setup_telescope_state):
         """Test that DeclinationRate advances the stored declination over time."""
