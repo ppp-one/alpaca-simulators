@@ -384,9 +384,13 @@ def set_declinationrate(
 ):
     validate_device("telescope", device_number)
     _advance_telescope_motion(device_number)
-    update_device_state("telescope", device_number, {"declinationrate": DeclinationRate})
     update_device_state(
-        "telescope", device_number, {"last_motion_update": datetime.now(timezone.utc).timestamp()}
+        "telescope",
+        device_number,
+        {
+            "declinationrate": DeclinationRate,
+            "last_motion_update": datetime.now(timezone.utc).timestamp(),
+        },
     )
 
     return AlpacaResponse(
