@@ -54,16 +54,12 @@ def set_position(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("filterwheel", device_number)
-    # state = get_device_state("filterwheel", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
 
     state = get_device_state("filterwheel", device_number)
     max_position = len(state.get("names", [])) - 1
 
     if Position < 0 or Position > max_position:
-        raise AlpacaError(0x402, f"Position out of range (0-{max_position})")
+        raise AlpacaError(0x401, f"Position out of range (0-{max_position})")
 
     update_device_state("filterwheel", device_number, {"position": Position})
 
