@@ -29,9 +29,23 @@ router = APIRouter()
 image_cache = {}
 
 
-def make_cache_key(ra, dec, duration, light, focus, sunlight, tracking_ra_rate, tracking_dec_rate):
+def make_cache_key(
+    ra,
+    dec,
+    duration,
+    light,
+    focus,
+    sunlight,
+    tracking_ra_rate,
+    tracking_dec_rate,
+    numx,
+    numy,
+    binx,
+    biny,
+):
     return (
-        f"{ra}_{dec}_{duration}_{light}_{focus}_{sunlight}_{tracking_ra_rate}_{tracking_dec_rate}"
+        f"{ra}_{dec}_{duration}_{light}_{focus}_{sunlight}_"
+        f"{tracking_ra_rate}_{tracking_dec_rate}_{numx}x{numy}_b{binx}x{biny}"
     )
 
 
@@ -174,6 +188,10 @@ async def exposure_task(device_number: int, duration: float, light: bool):
             sunlight=sunlight,
             tracking_ra_rate=tracking_ra_rate,
             tracking_dec_rate=tracking_dec_rate,
+            numx=cam_state.get("numx"),
+            numy=cam_state.get("numy"),
+            binx=cam_state.get("binx", 1),
+            biny=cam_state.get("biny", 1),
         )
         if key in image_cache:
             print(f"Using cached image for key: {key}")
@@ -293,14 +311,34 @@ def start_exposure(
     state = get_device_state("camera", device_number)
     if Duration < state.get("exposuremin", 0.001):
         raise AlpacaError(
-            0x402,
+            0x401,
             f"Exposure duration too short (minimum: {state.get('exposuremin', 0.001)}s)",
         )
 
     if Duration > state.get("exposuremax", 3600.0):
         raise AlpacaError(
-            0x402,
+            0x401,
             f"Exposure duration too long (maximum: {state.get('exposuremax', 3600.0)}s)",
+        )
+
+    # Validate the subframe in binned pixels (NumX/NumY/StartX/StartY are binned).
+    binx = state.get("binx", 1)
+    biny = state.get("biny", 1)
+    max_binned_x = state.get("cameraxsize", 1024) // binx
+    max_binned_y = state.get("cameraysize", 1024) // biny
+    numx = state.get("numx", max_binned_x)
+    numy = state.get("numy", max_binned_y)
+    startx = state.get("startx", 0)
+    starty = state.get("starty", 0)
+    if numx < 1 or startx < 0 or startx + numx > max_binned_x:
+        raise AlpacaError(
+            0x401,
+            f"Subframe X out of range: StartX={startx}, NumX={numx}, max={max_binned_x}",
+        )
+    if numy < 1 or starty < 0 or starty + numy > max_binned_y:
+        raise AlpacaError(
+            0x401,
+            f"Subframe Y out of range: StartY={starty}, NumY={numy}, max={max_binned_y}",
         )
 
     # Start exposure task
@@ -697,6 +735,8 @@ def get_lastexposureduration(
 ):
     validate_device("camera", device_number)
     state = get_device_state("camera", device_number)
+    if not state.get("exposure_start_time"):
+        raise AlpacaError(0x40B, "No exposure has been taken")
     return DoubleResponse(
         Value=state.get("exposure_duration", 0.0),
         ClientTransactionID=ClientTransactionID,
@@ -710,8 +750,11 @@ def get_lastexposurestarttime(
 ):
     validate_device("camera", device_number)
     state = get_device_state("camera", device_number)
+    start_time = state.get("exposure_start_time")
+    if not start_time:
+        raise AlpacaError(0x40B, "No exposure has been taken")
     return StringResponse(
-        Value=str(state.get("exposure_start_time", "")),
+        Value=str(start_time),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -825,7 +868,13 @@ def set_ccdtemperature(
 
     state = get_device_state("camera", device_number)
     if not state.get("cansetccdtemperature", True):
-        raise AlpacaError(0x401, "Camera does not support temperature control")
+        raise AlpacaError(0x400, "Camera does not support temperature control")
+
+    if SetCCDTemperature <= -273.15 or SetCCDTemperature >= 100.0:
+        raise AlpacaError(
+            0x401,
+            f"SetCCDTemperature {SetCCDTemperature} out of range (-273.15, 100.0)",
+        )
 
     update_device_state("camera", device_number, {"setccdtemperature": SetCCDTemperature})
 
@@ -884,12 +933,15 @@ def get_coolerpower(device_number: int = Path(..., ge=0), ClientTransactionID: i
 
 
 # Gain control
-@router.get("/camera/{device_number}/gain", response_model=DoubleResponse)
+# This camera operates in "Gains" list mode: Gain returns the integer index into
+# the Gains list, and GainMin/GainMax must return PropertyNotImplemented because
+# the two modes (Gains list vs. numeric min/max) are mutually exclusive in ASCOM.
+@router.get("/camera/{device_number}/gain", response_model=IntResponse)
 def get_gain(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     state = get_device_state("camera", device_number)
-    return DoubleResponse(
-        Value=state.get("gain", 1.0),
+    return IntResponse(
+        Value=int(state.get("gain", 0)),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -898,21 +950,15 @@ def get_gain(device_number: int = Path(..., ge=0), ClientTransactionID: int = Qu
 @router.put("/camera/{device_number}/gain", response_model=AlpacaResponse)
 def set_gain(
     device_number: int = Path(..., ge=0),
-    Gain: float = Form(...),
+    Gain: int = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("camera", device_number)
-    # state = get_device_state("camera", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
 
     state = get_device_state("camera", device_number)
-    min_gain = state.get("gainmin", 0.1)
-    max_gain = state.get("gainmax", 10.0)
-
-    if Gain < min_gain or Gain > max_gain:
-        raise AlpacaError(0x402, f"Gain out of range ({min_gain} to {max_gain})")
+    gains = state.get("gains", [])
+    if Gain < 0 or Gain >= len(gains):
+        raise AlpacaError(0x401, f"Gain index out of range (0 to {len(gains) - 1})")
 
     update_device_state("camera", device_number, {"gain": Gain})
 
@@ -922,26 +968,16 @@ def set_gain(
     )
 
 
-@router.get("/camera/{device_number}/gainmax", response_model=DoubleResponse)
+@router.get("/camera/{device_number}/gainmax", response_model=IntResponse)
 def get_gainmax(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
-    state = get_device_state("camera", device_number)
-    return DoubleResponse(
-        Value=state.get("gainmax", 10.0),
-        ClientTransactionID=ClientTransactionID,
-        ServerTransactionID=get_server_transaction_id(),
-    )
+    raise AlpacaError(0x400, "GainMax not implemented when Gains list is provided")
 
 
-@router.get("/camera/{device_number}/gainmin", response_model=DoubleResponse)
+@router.get("/camera/{device_number}/gainmin", response_model=IntResponse)
 def get_gainmin(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
-    state = get_device_state("camera", device_number)
-    return DoubleResponse(
-        Value=state.get("gainmin", 0.1),
-        ClientTransactionID=ClientTransactionID,
-        ServerTransactionID=get_server_transaction_id(),
-    )
+    raise AlpacaError(0x400, "GainMin not implemented when Gains list is provided")
 
 
 @router.get("/camera/{device_number}/gains", response_model=StringArrayResponse)
@@ -956,12 +992,15 @@ def get_gains(device_number: int = Path(..., ge=0), ClientTransactionID: int = Q
 
 
 # Offset control
-@router.get("/camera/{device_number}/offset", response_model=DoubleResponse)
+# This camera operates in "Offsets" list mode: Offset returns the integer index
+# into the Offsets list, and OffsetMin/OffsetMax must return PropertyNotImplemented
+# because the two modes are mutually exclusive in ASCOM.
+@router.get("/camera/{device_number}/offset", response_model=IntResponse)
 def get_offset(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     state = get_device_state("camera", device_number)
-    return DoubleResponse(
-        Value=state.get("offset", 0.0),
+    return IntResponse(
+        Value=int(state.get("offset", 0)),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -970,21 +1009,15 @@ def get_offset(device_number: int = Path(..., ge=0), ClientTransactionID: int = 
 @router.put("/camera/{device_number}/offset", response_model=AlpacaResponse)
 def set_offset(
     device_number: int = Path(..., ge=0),
-    Offset: float = Form(...),
+    Offset: int = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("camera", device_number)
-    # state = get_device_state("camera", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
 
     state = get_device_state("camera", device_number)
-    min_offset = state.get("offsetmin", -1000.0)
-    max_offset = state.get("offsetmax", 1000.0)
-
-    if Offset < min_offset or Offset > max_offset:
-        raise AlpacaError(0x402, f"Offset out of range ({min_offset} to {max_offset})")
+    offsets = state.get("offsets", [])
+    if Offset < 0 or Offset >= len(offsets):
+        raise AlpacaError(0x401, f"Offset index out of range (0 to {len(offsets) - 1})")
 
     update_device_state("camera", device_number, {"offset": Offset})
 
@@ -994,26 +1027,16 @@ def set_offset(
     )
 
 
-@router.get("/camera/{device_number}/offsetmax", response_model=DoubleResponse)
+@router.get("/camera/{device_number}/offsetmax", response_model=IntResponse)
 def get_offsetmax(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
-    state = get_device_state("camera", device_number)
-    return DoubleResponse(
-        Value=state.get("offsetmax", 1000.0),
-        ClientTransactionID=ClientTransactionID,
-        ServerTransactionID=get_server_transaction_id(),
-    )
+    raise AlpacaError(0x400, "OffsetMax not implemented when Offsets list is provided")
 
 
-@router.get("/camera/{device_number}/offsetmin", response_model=DoubleResponse)
+@router.get("/camera/{device_number}/offsetmin", response_model=IntResponse)
 def get_offsetmin(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
-    state = get_device_state("camera", device_number)
-    return DoubleResponse(
-        Value=state.get("offsetmin", -1000.0),
-        ClientTransactionID=ClientTransactionID,
-        ServerTransactionID=get_server_transaction_id(),
-    )
+    raise AlpacaError(0x400, "OffsetMin not implemented when Offsets list is provided")
 
 
 @router.get("/camera/{device_number}/offsets", response_model=StringArrayResponse)
@@ -1047,17 +1070,13 @@ def set_numx(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("camera", device_number)
-    state = get_device_state("camera", device_number)
 
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
-
-    state = get_device_state("camera", device_number)
-    max_x = state.get("cameraxsize", 1024)
-    startx = state.get("startx", 0)
-
-    if NumX < 1 or (startx + NumX) > max_x:
-        raise AlpacaError(0x402, f"NumX out of range (1 to {max_x - startx})")
+    # Permissive setter: the combined subframe geometry is validated in
+    # StartExposure. Only obvious garbage is rejected here. ConformU expects to
+    # be able to write out-of-range values to test that StartExposure rejects
+    # them.
+    if NumX < 1:
+        raise AlpacaError(0x401, f"NumX must be >= 1, got {NumX}")
 
     update_device_state("camera", device_number, {"numx": NumX})
 
@@ -1086,17 +1105,9 @@ def set_numy(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("camera", device_number)
-    state = get_device_state("camera", device_number)
 
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
-
-    state = get_device_state("camera", device_number)
-    max_y = state.get("cameraysize", 1024)
-    starty = state.get("starty", 0)
-
-    if NumY < 1 or (starty + NumY) > max_y:
-        raise AlpacaError(0x402, f"NumY out of range (1 to {max_y - starty})")
+    if NumY < 1:
+        raise AlpacaError(0x401, f"NumY must be >= 1, got {NumY}")
 
     update_device_state("camera", device_number, {"numy": NumY})
 
@@ -1124,17 +1135,9 @@ def set_startx(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("camera", device_number)
-    state = get_device_state("camera", device_number)
 
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
-
-    state = get_device_state("camera", device_number)
-    max_x = state.get("cameraxsize", 1024)
-    numx = state.get("numx", max_x)
-
-    if StartX < 0 or (StartX + numx) > max_x:
-        raise AlpacaError(0x402, f"StartX out of range (0 to {max_x - numx})")
+    if StartX < 0:
+        raise AlpacaError(0x401, f"StartX must be >= 0, got {StartX}")
 
     update_device_state("camera", device_number, {"startx": StartX})
 
@@ -1162,17 +1165,9 @@ def set_starty(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("camera", device_number)
-    state = get_device_state("camera", device_number)
 
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
-
-    state = get_device_state("camera", device_number)
-    max_y = state.get("cameraysize", 1024)
-    numy = state.get("numy", max_y)
-
-    if StartY < 0 or (StartY + numy) > max_y:
-        raise AlpacaError(0x402, f"StartY out of range (0 to {max_y - numy})")
+    if StartY < 0:
+        raise AlpacaError(0x401, f"StartY must be >= 0, got {StartY}")
 
     update_device_state("camera", device_number, {"starty": StartY})
 
@@ -1187,6 +1182,8 @@ def set_starty(
 def get_fastreadout(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
     state = get_device_state("camera", device_number)
+    if not state.get("canfastreadout", False):
+        raise AlpacaError(0x400, "Camera does not support fast readout mode")
     return BoolResponse(
         Value=state.get("fastreadout", False),
         ClientTransactionID=ClientTransactionID,
@@ -1201,14 +1198,10 @@ def set_fastreadout(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("camera", device_number)
-    # state = get_device_state("camera", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
 
     state = get_device_state("camera", device_number)
-    if not state.get("canfastreadout", True):
-        raise AlpacaError(0x401, "Camera does not support fast readout mode")
+    if not state.get("canfastreadout", False):
+        raise AlpacaError(0x400, "Camera does not support fast readout mode")
 
     update_device_state("camera", device_number, {"fastreadout": FastReadout})
 
@@ -1246,22 +1239,27 @@ def get_ispulseguiding(device_number: int = Path(..., ge=0), ClientTransactionID
     )
 
 
+async def _pulseguide_task(device_number: int, duration_ms: int):
+    """Hold IsPulseGuiding=True for the requested duration, then clear it."""
+    try:
+        await asyncio.sleep(duration_ms / 1000.0)
+    finally:
+        update_device_state("camera", device_number, {"ispulseguiding": False})
+
+
 @router.put("/camera/{device_number}/pulseguide", response_model=AlpacaResponse)
 def pulseguide(
+    background_tasks: BackgroundTasks,
     device_number: int = Path(..., ge=0),
     Direction: int = Form(...),
     Duration: int = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("camera", device_number)
-    # state = get_device_state("camera", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
 
     state = get_device_state("camera", device_number)
     if not state.get("canpulseguide", True):
-        raise AlpacaError(0x401, "Camera does not support pulse guiding")
+        raise AlpacaError(0x400, "Camera does not support pulse guiding")
 
     if Direction not in [
         GuideDirections.NORTH,
@@ -1269,17 +1267,13 @@ def pulseguide(
         GuideDirections.EAST,
         GuideDirections.WEST,
     ]:
-        raise AlpacaError(0x402, "Invalid guide direction")
+        raise AlpacaError(0x401, "Invalid guide direction")
 
     if Duration < 0:
-        raise AlpacaError(0x402, "Duration must be positive")
+        raise AlpacaError(0x401, "Duration must be positive")
 
-    # Simulate pulse guiding
     update_device_state("camera", device_number, {"ispulseguiding": True})
-
-    # In a real implementation, this would start a timer
-    # For simulation, we immediately stop pulse guiding
-    update_device_state("camera", device_number, {"ispulseguiding": False})
+    background_tasks.add_task(_pulseguide_task, device_number, Duration)
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -1288,17 +1282,14 @@ def pulseguide(
 
 
 # Sub-exposure duration
+# This simulator does not support sub-exposure stacking, so both get and set
+# return PropertyNotImplemented per ASCOM convention.
 @router.get("/camera/{device_number}/subexposureduration", response_model=DoubleResponse)
 def get_subexposureduration(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):
     validate_device("camera", device_number)
-    state = get_device_state("camera", device_number)
-    return DoubleResponse(
-        Value=state.get("subexposureduration", 1.0),
-        ClientTransactionID=ClientTransactionID,
-        ServerTransactionID=get_server_transaction_id(),
-    )
+    raise AlpacaError(0x400, "SubExposureDuration is not implemented")
 
 
 @router.put("/camera/{device_number}/subexposureduration", response_model=AlpacaResponse)
@@ -1308,20 +1299,7 @@ def set_subexposureduration(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("camera", device_number)
-    # state = get_device_state("camera", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
-
-    if SubExposureDuration <= 0:
-        raise AlpacaError(0x402, "Sub-exposure duration must be positive")
-
-    update_device_state("camera", device_number, {"subexposureduration": SubExposureDuration})
-
-    return AlpacaResponse(
-        ClientTransactionID=ClientTransactionID,
-        ServerTransactionID=get_server_transaction_id(),
-    )
+    raise AlpacaError(0x400, "SubExposureDuration is not implemented")
 
 
 # Deprecated endpoint for compatibility

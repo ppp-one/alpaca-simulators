@@ -15,10 +15,17 @@ from alpaca_simulators.state import (
 router = APIRouter()
 
 
+def _require_calibrator(state):
+    """Raise PropertyNotImplemented when no calibrator is present."""
+    if state.get("calibratorstate", CalibratorStatus.NOT_PRESENT) == CalibratorStatus.NOT_PRESENT:
+        raise AlpacaError(0x400, "Calibrator is not present on this device")
+
+
 @router.get("/covercalibrator/{device_number}/brightness", response_model=IntResponse)
 def get_brightness(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("covercalibrator", device_number)
     state = get_device_state("covercalibrator", device_number)
+    _require_calibrator(state)
     return IntResponse(
         Value=state.get("brightness", 0),
         ClientTransactionID=ClientTransactionID,
@@ -76,6 +83,7 @@ def get_coverstate(device_number: int = Path(..., ge=0), ClientTransactionID: in
 def get_maxbrightness(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("covercalibrator", device_number)
     state = get_device_state("covercalibrator", device_number)
+    _require_calibrator(state)
     return IntResponse(
         Value=state.get("maxbrightness", 255),
         ClientTransactionID=ClientTransactionID,
@@ -86,10 +94,8 @@ def get_maxbrightness(device_number: int = Path(..., ge=0), ClientTransactionID:
 @router.put("/covercalibrator/{device_number}/calibratoroff", response_model=AlpacaResponse)
 def calibratoroff(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("covercalibrator", device_number)
-    # state = get_device_state("covercalibrator", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
+    state = get_device_state("covercalibrator", device_number)
+    _require_calibrator(state)
 
     update_device_state(
         "covercalibrator",
@@ -114,15 +120,12 @@ def calibratoron(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("covercalibrator", device_number)
-    # state = get_device_state("covercalibrator", device_number)
     state = get_device_state("covercalibrator", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
+    _require_calibrator(state)
 
     max_brightness = state.get("maxbrightness", 255)
     if Brightness < 0 or Brightness > max_brightness:
-        raise AlpacaError(0x402, f"Brightness out of range (0-{max_brightness})")
+        raise AlpacaError(0x401, f"Brightness out of range (0-{max_brightness})")
 
     update_device_state(
         "covercalibrator",
@@ -163,17 +166,9 @@ def closecover(device_number: int = Path(..., ge=0), ClientTransactionID: int = 
 @router.put("/covercalibrator/{device_number}/haltcover", response_model=AlpacaResponse)
 def haltcover(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("covercalibrator", device_number)
-    # state = get_device_state("covercalibrator", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
-
-    update_device_state("covercalibrator", device_number, {"covermoving": False})
-
-    return AlpacaResponse(
-        ClientTransactionID=ClientTransactionID,
-        ServerTransactionID=get_server_transaction_id(),
-    )
+    # OpenCover and CloseCover complete synchronously in this simulator, so per
+    # ASCOM convention HaltCover must report itself as not implemented.
+    raise AlpacaError(0x400, "HaltCover is not implemented for a synchronous cover")
 
 
 @router.put("/covercalibrator/{device_number}/opencover", response_model=AlpacaResponse)

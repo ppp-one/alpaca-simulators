@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Form, Path, Query
+import asyncio
+
+from fastapi import APIRouter, BackgroundTasks, Form, Path, Query
 
 from alpaca_simulators.api.common import AlpacaError, validate_device
 from alpaca_simulators.state import (
@@ -13,6 +15,34 @@ from alpaca_simulators.state import (
 )
 
 router = APIRouter()
+
+# How long a simulated dome slew/find-home/park takes. Kept above ConformU's
+# 3-second "is it slewing?" check so AbortSlew tests can observe Slewing=True.
+_SLEW_DURATION_SECONDS = 4.0
+
+
+async def _slew_task(device_number: int, axis: str, target: float, gen: int):
+    """Hold Slewing=True for the slew duration, then apply target unless an
+    abort or newer slew superseded this one (tracked by ``slew_gen``)."""
+    await asyncio.sleep(_SLEW_DURATION_SECONDS)
+    state = get_device_state("dome", device_number)
+    if state.get("slew_gen") != gen or not state.get("slewing", False):
+        # Aborted, or a newer slew took over — leave state alone.
+        return
+    update = {axis: target, "slewing": False, "atpark": False, "athome": False}
+    update_device_state("dome", device_number, update)
+
+
+def _begin_slew(device_number: int, axis: str, target: float, background_tasks: BackgroundTasks):
+    """Mark the dome as slewing, bump the generation, and schedule completion."""
+    state = get_device_state("dome", device_number)
+    new_gen = state.get("slew_gen", 0) + 1
+    update_device_state(
+        "dome",
+        device_number,
+        {"slewing": True, "slew_gen": new_gen, "athome": False, "atpark": False},
+    )
+    background_tasks.add_task(_slew_task, device_number, axis, target, new_gen)
 
 
 @router.get("/dome/{device_number}/altitude", response_model=DoubleResponse)
@@ -210,12 +240,14 @@ def get_slewing(device_number: int = Path(..., ge=0), ClientTransactionID: int =
 @router.put("/dome/{device_number}/abortslew", response_model=AlpacaResponse)
 def abortslew(device_number: int = Path(..., ge=0), ClientTransactionID: int = Form(0)):
     validate_device("dome", device_number)
-    # state = get_device_state("dome", device_number)
 
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
-
-    update_device_state("dome", device_number, {"slewing": False})
+    # Bump slew_gen so any in-flight slew task no-ops when it wakes up.
+    state = get_device_state("dome", device_number)
+    update_device_state(
+        "dome",
+        device_number,
+        {"slewing": False, "slew_gen": state.get("slew_gen", 0) + 1},
+    )
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -314,28 +346,17 @@ def setpark(device_number: int = Path(..., ge=0), ClientTransactionID: int = For
 
 @router.put("/dome/{device_number}/slewtoaltitude", response_model=AlpacaResponse)
 def slewtoaltitude(
+    background_tasks: BackgroundTasks,
     device_number: int = Path(..., ge=0),
     Altitude: float = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("dome", device_number)
-    # state = get_device_state("dome", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
 
     if Altitude < 0.0 or Altitude > 90.0:
-        raise AlpacaError(0x402, "Altitude must be between 0 and 90 degrees")
+        raise AlpacaError(0x401, "Altitude must be between 0 and 90 degrees")
 
-    update_device_state(
-        "dome",
-        device_number,
-        {
-            "altitude": Altitude,
-            "slewing": False,  # Simplified - immediate slew
-            "atpark": False,
-        },
-    )
+    _begin_slew(device_number, "altitude", Altitude, background_tasks)
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -345,28 +366,17 @@ def slewtoaltitude(
 
 @router.put("/dome/{device_number}/slewtoazimuth", response_model=AlpacaResponse)
 def slewtoazimuth(
+    background_tasks: BackgroundTasks,
     device_number: int = Path(..., ge=0),
     Azimuth: float = Form(...),
     ClientTransactionID: int = Form(0),
 ):
     validate_device("dome", device_number)
-    # state = get_device_state("dome", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
 
     if Azimuth < 0.0 or Azimuth >= 360.0:
-        raise AlpacaError(0x402, "Azimuth must be between 0 and 360 degrees")
+        raise AlpacaError(0x401, "Azimuth must be between 0 and 360 degrees")
 
-    update_device_state(
-        "dome",
-        device_number,
-        {
-            "azimuth": Azimuth,
-            "slewing": False,  # Simplified - immediate slew
-            "atpark": False,
-        },
-    )
+    _begin_slew(device_number, "azimuth", Azimuth, background_tasks)
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -381,14 +391,11 @@ def synctoazimuth(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("dome", device_number)
-    # state = get_device_state("dome", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
 
     if Azimuth < 0.0 or Azimuth >= 360.0:
-        raise AlpacaError(0x402, "Azimuth must be between 0 and 360 degrees")
+        raise AlpacaError(0x401, "Azimuth must be between 0 and 360 degrees")
 
+    # Sync is instantaneous: snap azimuth to the requested value without slewing.
     update_device_state("dome", device_number, {"azimuth": Azimuth})
 
     return AlpacaResponse(
