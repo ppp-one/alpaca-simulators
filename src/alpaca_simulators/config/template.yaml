@@ -28,8 +28,6 @@ devices:
       fastreadout: false
       fullwellcapacity: 50000
       gain: 1
-      gainmax: 10
-      gainmin: 1
       gains: ["High", "Medium", "Low"]
       hasshutter: true
       heatsinktemperature: 25.0
@@ -43,11 +41,8 @@ devices:
       readoutmodes: ["Fast", "Normal", "High Quality"]
       sensorname: "Sony ICX694"
       sensortype: 1  # Monochrome
-      offset: 100
-      offsetmax: 1000
-      offsetmin: 0
+      offset: 1
       offsets: ["Low", "Medium", "High"]
-      subexposureduration: 0.0
       bayeroffsetx: 0
       bayeroffsety: 0
       binx: 1
