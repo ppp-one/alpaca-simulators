@@ -162,24 +162,20 @@ def move(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("focuser", device_number)
-    # state = get_device_state("focuser", device_number)
-
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
 
     state = get_device_state("focuser", device_number)
     max_step = state.get("maxstep", 100000)
 
-    if Position < 0 or Position > max_step:
-        raise AlpacaError(0x402, f"Position out of range (0-{max_step})")
+    # Per ASCOM, out-of-range Move targets are clamped silently to [0, MaxStep]
+    # rather than raising an exception.
+    target = max(0, min(Position, max_step))
 
-    # Simulate movement
     update_device_state(
         "focuser",
         device_number,
         {
-            "position": Position,
-            "ismoving": False,  # For simulator, movement is instantaneous
+            "position": target,
+            "ismoving": False,  # Simulator: movement is instantaneous.
         },
     )
 
