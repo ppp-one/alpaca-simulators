@@ -31,13 +31,11 @@ def set_averageperiod(
     ClientTransactionID: int = Form(0),
 ):
     validate_device("observingconditions", device_number)
-    # state = get_device_state("observingconditions", device_number)
 
-    # if not state.get("connected"):
-    # raise AlpacaError(0x407, "Device is not connected")
-
-    if AveragePeriod <= 0:
-        raise AlpacaError(0x402, "Average period must be positive")
+    # Per ASCOM, AveragePeriod must be non-negative. A value of 0 means
+    # "no averaging" and is a valid setting.
+    if AveragePeriod < 0:
+        raise AlpacaError(0x401, "Average period must be non-negative")
 
     update_device_state("observingconditions", device_number, {"averageperiod": AveragePeriod})
 
@@ -71,7 +69,7 @@ def set_cloudcover(
     # raise AlpacaError(0x407, "Device is not connected")
 
     if CloudCover < 0.0 or CloudCover > 1.0:
-        raise AlpacaError(0x402, "Cloud cover must be between 0.0 and 1.0")
+        raise AlpacaError(0x401, "Cloud cover must be between 0.0 and 1.0")
 
     update_device_state("observingconditions", device_number, {"cloudcover": CloudCover})
 
@@ -105,7 +103,7 @@ def set_dewpoint(
     # raise AlpacaError(0x407, "Device is not connected")
 
     if DewPoint < -50.0 or DewPoint > 50.0:
-        raise AlpacaError(0x402, "Dew point must be between -50.0°C and 50.0°C")
+        raise AlpacaError(0x401, "Dew point must be between -50.0°C and 50.0°C")
 
     update_device_state("observingconditions", device_number, {"dewpoint": DewPoint})
 
@@ -139,7 +137,7 @@ def set_humidity(
     # raise AlpacaError(0x407, "Device is not connected")
 
     if Humidity < 0.0 or Humidity > 100.0:
-        raise AlpacaError(0x402, "Humidity must be between 0.0% and 100.0%")
+        raise AlpacaError(0x401, "Humidity must be between 0.0% and 100.0%")
 
     update_device_state("observingconditions", device_number, {"humidity": Humidity})
 
@@ -173,7 +171,7 @@ def set_pressure(
     # raise AlpacaError(0x407, "Device is not connected")
 
     if Pressure < 800.0 or Pressure > 1200.0:
-        raise AlpacaError(0x402, "Pressure must be between 800.0 and 1200.0 hPa")
+        raise AlpacaError(0x401, "Pressure must be between 800.0 and 1200.0 hPa")
 
     update_device_state("observingconditions", device_number, {"pressure": Pressure})
 
@@ -207,7 +205,7 @@ def set_rainrate(
     # raise AlpacaError(0x407, "Device is not connected")
 
     if RainRate < 0.0 or RainRate > 100.0:
-        raise AlpacaError(0x402, "Rain rate must be between 0.0 and 100.0 mm/hr")
+        raise AlpacaError(0x401, "Rain rate must be between 0.0 and 100.0 mm/hr")
 
     update_device_state("observingconditions", device_number, {"rainrate": RainRate})
 
@@ -277,7 +275,7 @@ def set_skyquality(
     # raise AlpacaError(0x407, "Device is not connected")
 
     if SkyQuality < 15.0 or SkyQuality > 25.0:
-        raise AlpacaError(0x402, "Sky quality must be between 15.0 and 25.0 mag/arcsec²")
+        raise AlpacaError(0x401, "Sky quality must be between 15.0 and 25.0 mag/arcsec²")
 
     update_device_state("observingconditions", device_number, {"skyquality": SkyQuality})
 
@@ -342,7 +340,7 @@ def set_starfwhm(
     # raise AlpacaError(0x407, "Device is not connected")
 
     if StarFWHM < 0.5 or StarFWHM > 10.0:
-        raise AlpacaError(0x402, "Star FWHM must be between 0.5 and 10.0 arcseconds")
+        raise AlpacaError(0x401, "Star FWHM must be between 0.5 and 10.0 arcseconds")
 
     update_device_state("observingconditions", device_number, {"starfwhm": StarFWHM})
 
@@ -376,7 +374,7 @@ def set_temperature(
     # raise AlpacaError(0x407, "Device is not connected")
 
     if Temperature < -50.0 or Temperature > 50.0:
-        raise AlpacaError(0x402, "Temperature must be between -50.0°C and 50.0°C")
+        raise AlpacaError(0x401, "Temperature must be between -50.0°C and 50.0°C")
 
     update_device_state("observingconditions", device_number, {"temperature": Temperature})
 
@@ -410,7 +408,7 @@ def set_winddirection(
     # raise AlpacaError(0x407, "Device is not connected")
 
     if WindDirection < 0.0 or WindDirection >= 360.0:
-        raise AlpacaError(0x402, "Wind direction must be between 0.0 and 359.9 degrees")
+        raise AlpacaError(0x401, "Wind direction must be between 0.0 and 359.9 degrees")
 
     update_device_state("observingconditions", device_number, {"winddirection": WindDirection})
 
@@ -444,7 +442,7 @@ def set_windgust(
     # raise AlpacaError(0x407, "Device is not connected")
 
     if WindGust < 0.0 or WindGust > 150.0:
-        raise AlpacaError(0x402, "Wind gust must be between 0.0 and 150.0 m/s")
+        raise AlpacaError(0x401, "Wind gust must be between 0.0 and 150.0 m/s")
 
     update_device_state("observingconditions", device_number, {"windgust": WindGust})
 
@@ -478,7 +476,7 @@ def set_windspeed(
     # raise AlpacaError(0x407, "Device is not connected")
 
     if WindSpeed < 0.0 or WindSpeed > 100.0:
-        raise AlpacaError(0x402, "Wind speed must be between 0.0 and 100.0 m/s")
+        raise AlpacaError(0x401, "Wind speed must be between 0.0 and 100.0 m/s")
 
     update_device_state("observingconditions", device_number, {"windspeed": WindSpeed})
 
