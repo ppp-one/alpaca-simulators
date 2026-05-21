@@ -147,11 +147,9 @@ async def root():
     """Root endpoint with basic information"""
     return {
         "message": "Alpaca Observatory Simulator",
-        "version": "1.0.0",
         "description": "ASCOM Alpaca compatible device simulator",
         "api_docs": "/docs",
         "test_interface": "/test_interface",
-        "management_api": "/management",
         "device_api": "/api/v1",
         "sunlight_control": "/sunlight",
     }
@@ -237,46 +235,3 @@ async def get_discovered_endpoints():
             for device_type in endpoints.keys()
         },
     }
-
-
-# Add management endpoints for Alpaca discovery
-@app.get("/management/apiversions")
-async def get_api_versions():
-    """Return supported API versions"""
-    return {"Value": [1], "ErrorNumber": 0, "ErrorMessage": ""}
-
-
-@app.get("/management/v1/description")
-async def get_management_description():
-    """Return management API description"""
-    return {
-        "Value": {
-            "ServerName": "Alpaca Observatory Simulator",
-            "Manufacturer": "ASCOM Initiative",
-            "ManufacturerVersion": "1.0.0",
-            "Location": "Observatory Simulator",
-        },
-        "ErrorNumber": 0,
-        "ErrorMessage": "",
-    }
-
-
-@app.get("/management/v1/configureddevices")
-async def get_configured_devices():
-    """Return list of configured devices"""
-    from alpaca_simulators.state import config
-
-    devices = []
-
-    for device_type, device_configs in config.get("devices", {}).items():
-        for dev_num, dev_config in device_configs.items():
-            devices.append(
-                {
-                    "DeviceName": dev_config.get("name", f"Simulator {device_type.title()}"),
-                    "DeviceType": device_type.title(),
-                    "DeviceNumber": dev_num,
-                    "UniqueID": f"{device_type}-{dev_num}",
-                }
-            )
-
-    return {"Value": devices, "ErrorNumber": 0, "ErrorMessage": ""}

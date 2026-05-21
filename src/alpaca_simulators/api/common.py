@@ -1,5 +1,6 @@
 import json
 import logging
+from importlib.metadata import version as _pkg_version
 from typing import Any
 
 from fastapi import APIRouter, Form, Path, Query, Request
@@ -161,7 +162,7 @@ def get_driverversion(
     validate_device(device_type, device_number)
     cfg = get_device_config(device_type, device_number)
     return StringResponse(
-        Value=cfg.get("driverversion", "1.0.0"),
+        Value=cfg.get("driverversion", _pkg_version("alpaca-simulators")),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
