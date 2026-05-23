@@ -39,7 +39,7 @@ devices:
       pixelsizey: 10
       readoutmode: 0
       readoutmodes: ["Fast", "Normal", "High Quality"]
-      sensorname: "Sony ICX694"
+      sensorname: "Simulator Sensor"
       sensortype: 1  # Monochrome
       offset: 1
       offsets: ["Low", "Medium", "High"]
@@ -145,7 +145,7 @@ devices:
       cansetshutter: true
       canslave: true
       cansyncazimuth: true
-      shutterstatus: 2  # Closed
+      shutterstatus: 1  # Closed
       slaved: false
       slewing: false
 
