@@ -1,4 +1,5 @@
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,9 +25,22 @@ from alpaca_simulators.endpoint_discovery import (
     discover_device_endpoints,
     get_action_endpoints,
 )
-from alpaca_simulators.state import get_server_transaction_id, reload_config
+from alpaca_simulators.state import (
+    get_all_configured_devices,
+    get_server_transaction_id,
+    reload_config,
+)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    devices = get_all_configured_devices()
+    telescope.start_background_updater(devices.get("telescope", []))
+    yield
+
 
 app = FastAPI(
+    lifespan=lifespan,
     title="Alpaca Observatory Simulator",
     description=(
         "A simulator for Alpaca devices based on the AlpacaDeviceAPI_v1.yaml specification."

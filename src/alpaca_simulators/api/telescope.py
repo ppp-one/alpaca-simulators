@@ -63,6 +63,38 @@ def degrees_to_hours(degrees):
     return degrees / 15.0
 
 
+def _radec_to_altaz(
+    ra_hours: float,
+    dec_deg: float,
+    lat_deg: float,
+    lon_deg: float,
+    utc_timestamp: float,
+) -> tuple[float, float]:
+    """Convert equatorial coordinates to horizontal coordinates.
+
+    Returns (altitude, azimuth) in degrees.
+    Azimuth is measured from North through East (0–360°).
+    """
+    jd = utc_timestamp / 86400.0 + 2440587.5
+    gmst = 18.697374558 + 24.06570982441908 * (jd - 2451545.0)
+    lst = (gmst + lon_deg / 15.0) % 24.0
+
+    ha = math.radians((lst - ra_hours) * 15.0)  # hour angle in radians
+    lat = math.radians(lat_deg)
+    dec = math.radians(dec_deg)
+
+    sin_alt = math.sin(lat) * math.sin(dec) + math.cos(lat) * math.cos(dec) * math.cos(ha)
+    alt = math.degrees(math.asin(max(-1.0, min(1.0, sin_alt))))
+
+    az_rad = math.atan2(
+        -math.cos(dec) * math.sin(ha),
+        math.sin(dec) * math.cos(lat) - math.cos(dec) * math.sin(lat) * math.cos(ha),
+    )
+    az = math.degrees(az_rad) % 360.0
+
+    return alt, az
+
+
 def _advance_telescope_motion(device_number: int) -> None:
     """Advance stored telescope coordinates based on elapsed wall-clock time."""
     state = get_device_state("telescope", device_number)
@@ -93,15 +125,45 @@ def _advance_telescope_motion(device_number: int) -> None:
     rightascension = normalize_hours(state.get("rightascension", 0.0) + elapsed_seconds * ra_rate)
     declination = normalize_degrees(state.get("declination", 0.0) + elapsed_seconds * dec_rate)
 
+    altitude, azimuth = _radec_to_altaz(
+        rightascension,
+        declination,
+        state.get("sitelatitude", 0.0),
+        state.get("sitelongitude", 0.0),
+        now,
+    )
+
     update_device_state(
         "telescope",
         device_number,
         {
             "rightascension": rightascension,
             "declination": declination,
+            "altitude": altitude,
+            "azimuth": azimuth,
             "last_motion_update": now,
         },
     )
+
+
+_UPDATE_INTERVAL = 0.1  # seconds between background coordinate updates
+
+
+def _telescope_background_loop(device_number: int) -> None:
+    """Daemon thread: update telescope coordinates every _UPDATE_INTERVAL seconds."""
+    while True:
+        sleep(_UPDATE_INTERVAL)
+        _advance_telescope_motion(device_number)
+
+
+def start_background_updater(device_numbers: list[int]) -> None:
+    """Start a background updater thread for each of the given telescope device numbers."""
+    for device_number in device_numbers:
+        threading.Thread(
+            target=_telescope_background_loop,
+            args=(device_number,),
+            daemon=True,
+        ).start()
 
 
 @router.get("/telescope/{device_number}/alignmentmode", response_model=IntResponse)
