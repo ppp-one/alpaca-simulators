@@ -37,6 +37,37 @@ def _complete_slew(device_number: int) -> None:
     update_device_state("telescope", device_number, {"slewing": False})
 
 
+def _complete_slew_to_altaz(device_number: int, target_az: float, target_alt: float) -> None:
+    """Background thread: complete an async AltAz slew.
+
+    Waits for the slew duration, then converts the target alt/az back to RA/Dec
+    at the completion time so that the background coordinate updater will
+    consistently reproduce the correct alt/az on subsequent ticks.
+    """
+    sleep(_SLEW_DURATION)
+    state = get_device_state("telescope", device_number)
+    now = datetime.now(timezone.utc).timestamp()
+    ra, dec = _altaz_to_radec(
+        target_alt,
+        target_az,
+        state.get("sitelatitude", 0.0),
+        state.get("sitelongitude", 0.0),
+        now,
+    )
+    update_device_state(
+        "telescope",
+        device_number,
+        {
+            "slewing": False,
+            "rightascension": ra,
+            "declination": dec,
+            "altitude": target_alt,
+            "azimuth": target_az,
+            "last_motion_update": now,
+        },
+    )
+
+
 def _complete_pulseguide(device_number: int, delay_seconds: float) -> None:
     """Background thread: reset IsPulseGuiding after the guide duration expires."""
     sleep(delay_seconds)
@@ -93,6 +124,37 @@ def _radec_to_altaz(
     az = math.degrees(az_rad) % 360.0
 
     return alt, az
+
+
+def _altaz_to_radec(
+    alt_deg: float,
+    az_deg: float,
+    lat_deg: float,
+    lon_deg: float,
+    utc_timestamp: float,
+) -> tuple[float, float]:
+    """Convert horizontal coordinates to equatorial coordinates.
+
+    Inverse of _radec_to_altaz. Azimuth measured from North through East.
+    Returns (right_ascension_hours, declination_degrees).
+    """
+    jd = utc_timestamp / 86400.0 + 2440587.5
+    gmst = 18.697374558 + 24.06570982441908 * (jd - 2451545.0)
+    lst = (gmst + lon_deg / 15.0) % 24.0
+
+    alt = math.radians(alt_deg)
+    az = math.radians(az_deg)
+    lat = math.radians(lat_deg)
+
+    sin_dec = math.sin(lat) * math.sin(alt) + math.cos(lat) * math.cos(alt) * math.cos(az)
+    dec_deg = math.degrees(math.asin(max(-1.0, min(1.0, sin_dec))))
+
+    ha_rad = math.atan2(
+        -math.sin(az) * math.cos(alt),
+        math.sin(alt) * math.cos(lat) - math.cos(alt) * math.sin(lat) * math.cos(az),
+    )
+    ra = normalize_hours(lst - math.degrees(ha_rad) / 15.0)
+    return ra, dec_deg
 
 
 def _advance_telescope_motion(device_number: int) -> None:
@@ -1330,13 +1392,24 @@ def slewtoaltaz(
     if Azimuth < 0.0 or Azimuth > 360.0:
         raise AlpacaError(0x401, "Azimuth must be between 0 and 360 degrees")
 
+    now = datetime.now(timezone.utc).timestamp()
+    ra, dec = _altaz_to_radec(
+        Altitude,
+        Azimuth,
+        state.get("sitelatitude", 0.0),
+        state.get("sitelongitude", 0.0),
+        now,
+    )
     update_device_state(
         "telescope",
         device_number,
         {
             "azimuth": Azimuth,
             "altitude": Altitude,
-            "slewing": False,  # Simplified - immediate slew
+            "rightascension": ra,
+            "declination": dec,
+            "last_motion_update": now,
+            "slewing": False,
             "atpark": False,
         },
     )
@@ -1365,14 +1438,18 @@ def slewtoaltazasync(
     if Azimuth < 0.0 or Azimuth > 360.0:
         raise AlpacaError(0x401, "Azimuth must be between 0 and 360 degrees")
 
-    # Start async slew
+    # Start async slew – final RA/Dec is resolved at completion time by the thread
     update_device_state(
         "telescope",
         device_number,
         {"azimuth": Azimuth, "altitude": Altitude, "slewing": True, "atpark": False},
     )
 
-    threading.Thread(target=_complete_slew, args=(device_number,), daemon=True).start()
+    threading.Thread(
+        target=_complete_slew_to_altaz,
+        args=(device_number, Azimuth, Altitude),
+        daemon=True,
+    ).start()
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
