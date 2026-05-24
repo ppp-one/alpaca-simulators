@@ -8,8 +8,8 @@ devices:
       driverversion: "1.0.0"
       interfaceversion: 3
       # Camera specific properties
-      cameraxsize: 2048
-      cameraysize: 2048
+      cameraxsize: 1024
+      cameraysize: 1024
       canabortexposure: true
       canasymmetricbin: true
       canfastreadout: false
@@ -21,7 +21,7 @@ devices:
       setccdtemperature: -20.0
       cooleron: false
       coolerpower: 0.0
-      electronsperadu: 1.5
+      electronsperadu: 1
       exposuremax: 3600.0
       exposuremin: 0.0
       exposureresolution: 0.001
@@ -47,8 +47,8 @@ devices:
       bayeroffsety: 0
       binx: 1
       biny: 1
-      numx: 2048
-      numy: 2048
+      numx: 1024
+      numy: 1024
       startx: 0
       starty: 0
       # pixel_defects:
@@ -95,7 +95,7 @@ devices:
       cansync: true
       cansyncaltaz: true
       canunpark: true
-      declination: 0.0
+      declination: 89.0
       declinationrate: 0.0
       doesrefraction: true
       equatorialsystem: 0  # J2000
@@ -112,8 +112,6 @@ devices:
       sitelongitude: 8.0
       slewing: false
       slewsettletime: 0.0
-      targetdeclination: 0.0
-      targetrightascension: 0.0
       tracking: false
       trackingrate: 0  # Sidereal
       axis0rates:
@@ -271,3 +269,4 @@ bad_tracking: false
 bad_tracking_rate: 0.01  # arcseconds per second
 pointing_error_ra: 0.0 # arcmin
 pointing_error_dec: 0.0 # arcmin
+tap_source: null

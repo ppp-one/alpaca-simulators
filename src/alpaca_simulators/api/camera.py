@@ -206,6 +206,7 @@ async def exposure_task(device_number: int, duration: float, light: bool):
                 timeout=Config().load().get("gaia_query_timeout", 30),
                 tracking_ra_rate=tracking_ra_rate,
                 tracking_dec_rate=tracking_dec_rate,
+                tap_source=Config().load().get("tap_source", None),
             )
             image_cache[key] = image_data
 
