@@ -7,6 +7,7 @@ from fastapi import APIRouter, BackgroundTasks, Form, Path, Query
 from fastapi.responses import StreamingResponse
 
 from alpaca_simulators.api.common import AlpacaError, validate_device
+from alpaca_simulators.api.telescope import compute_coordinate_rates
 from alpaca_simulators.config import Config
 from alpaca_simulators.state import (
     AlpacaResponse,
@@ -71,6 +72,12 @@ async def exposure_task(device_number: int, duration: float, light: bool):
     """Background task to simulate camera exposure"""
     global image_cache
     try:
+        # Snapshot the telescope state at shutter-open time.  This must happen
+        # before the sleep loop so that the coordinates and motion rates captured
+        # reflect the moment the exposure started, not the moment the image is
+        # generated (by which time MoveAxis may have been stopped or changed).
+        tel_state_at_open = get_device_state("telescope", 0)
+
         # Update camera state to exposing
         update_device_state(
             "camera",
@@ -98,7 +105,7 @@ async def exposure_task(device_number: int, duration: float, light: bool):
 
         # Generate image using cabaret
         cam_state = get_device_state("camera", device_number)
-        tel_state = get_device_state("telescope", 0)  # Assume telescope 0
+        tel_state = get_device_state("telescope", 0)  # for hardware properties
         focuser_state = get_device_state("focuser", 0)  # Assume focuser 0
 
         # Calculate seeing multiplier based on focuser position
@@ -107,11 +114,12 @@ async def exposure_task(device_number: int, duration: float, light: bool):
         if seeing_multiplier > 5:
             seeing_multiplier = 5
 
-        # Get current coordinates from telescope
+        # Use shutter-open coordinates so the image is centred on where the
+        # telescope was pointing when the exposure started, not when it ended.
         pointing_error_ra = Config().load().get("pointing_error_ra", 0.0)  # arcmin
         pointing_error_dec = Config().load().get("pointing_error_dec", 0.0)  # arcmin
-        ra = tel_state.get("rightascension", 0.0) + (pointing_error_ra / 60) / 15
-        dec = tel_state.get("declination", 0.0) + (pointing_error_dec / 60)
+        ra = tel_state_at_open.get("rightascension", 0.0) + (pointing_error_ra / 60) / 15
+        dec = tel_state_at_open.get("declination", 0.0) + (pointing_error_dec / 60)
         # gaia breaks
         if dec >= 90.0 or dec <= -90.0:
             dec = 89.99 if dec >= 0 else -89.99
@@ -158,25 +166,21 @@ async def exposure_task(device_number: int, duration: float, light: bool):
         bad_tracking = Config().load().get("bad_tracking", False)
         if bad_tracking:
             bad_tracking_rate = Config().load().get("bad_tracking_rate", 0.01)  # arcsec per second
-            last_slew_time = tel_state.get("last_slew_time", datetime.now(timezone.utc))
+            last_slew_time = tel_state_at_open.get("last_slew_time", datetime.now(timezone.utc))
             # drift RA/Dec based on time since last slew
             time_elapsed = (datetime.now(timezone.utc) - last_slew_time).total_seconds()
             ra += time_elapsed * (bad_tracking_rate / 3600) / 15  # convert to hours
             dec += time_elapsed * bad_tracking_rate / 3600
 
-        # Convert ASCOM tracking rates to arcseconds per second for cabaret.
-        # RightAscensionRate and DeclinationRate are ASCOM offsets from sidereal tracking.
-        # The pointing coordinates (ra/dec) already account for sidereal drift via
-        # _advance_telescope_motion in telescope.py, so only the rate offsets are passed
-        # here to simulate trailing from non-sidereal tracking.
-        # rightascensionrate is RA-seconds/sidereal-second; × 15 converts to arcsec/s.
-        # declinationrate is already arcseconds/sidereal-second ≈ arcsec/s.
-        if tel_state.get("tracking", False):
-            tracking_ra_rate = tel_state.get("rightascensionrate", 0.0) * 15.0
-            tracking_dec_rate = tel_state.get("declinationrate", 0.0)
-        else:
-            tracking_ra_rate = 0.0
-            tracking_dec_rate = 0.0
+        # On-sky rates for cabaret's star trails. cabaret's add_stars() wants arcsec/s,
+        # with RA as dα·cos(δ)/dt. compute_coordinate_rates() (telescope.py) gives the
+        # coordinate-space rates from the shutter-open snapshot; convert to on-sky here.
+        ra_rate_h, dec_rate_deg = compute_coordinate_rates(tel_state_at_open)
+
+        # Coordinate-space rates → on-sky arcsec/s (RA: RA-hours/s ×54000 ×cos δ).
+        cos_dec = np.cos(np.radians(dec))
+        tracking_ra_rate = ra_rate_h * 54000.0 * cos_dec
+        tracking_dec_rate = dec_rate_deg * 3600.0
 
         # Generate star field image
         key = make_cache_key(
@@ -961,7 +965,7 @@ def set_gain(
     if Gain < 0 or Gain >= len(gains):
         raise AlpacaError(0x401, f"Gain index out of range (0 to {len(gains) - 1})")
 
-    update_device_state("camera", device_number, {"gain": Gain})
+    update_device_state("camera", device_number, {"gain": Gain + 1})
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,

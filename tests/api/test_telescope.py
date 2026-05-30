@@ -135,10 +135,9 @@ class TestTelescope:
             0,
             {
                 "rightascension": 1.0,
-                # ASCOM RightAscensionRate unit: seconds of RA per sidereal second.
-                # Advance formula: elapsed_s * rate / 3600 = change in RA hours.
-                # tracking=True is required; rates are offsets from sidereal and
-                # are only applied when the mount is tracking.
+                # RightAscensionRate is seconds of RA per sidereal second, so the RA
+                # advance over elapsed_s is elapsed_s * rate / 3600 RA-hours.
+                # Rates apply only while tracking.
                 "rightascensionrate": 225.0,
                 "tracking": True,
                 "declination": 0.0,
@@ -153,8 +152,8 @@ class TestTelescope:
         assert response.status_code == 200
 
         expected_ra = 1.0 + (2.0 * 225.0) / 3600.0
-        # Tolerance of 5e-3 RA-hours accommodates ~80 ms of test overhead at this rate
-        # (225/3600 ≈ 0.0625 RA-hours/s). The previous 1e-4 only allowed ~1.6 ms.
+        # Tolerance of 5e-3 RA-hours accommodates test overhead at this rate
+        # (225/3600 = 0.0625 RA-hours/s).
         assert response.json()["Value"] == pytest.approx(expected_ra, abs=5e-3)
 
     def test_declinationrate_advances_declination(self, setup_telescope_state):

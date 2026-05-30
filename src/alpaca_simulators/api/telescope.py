@@ -28,45 +28,6 @@ from alpaca_simulators.state import (
 
 router = APIRouter()
 
-_SLEW_DURATION = 3.0  # seconds – simulated slew time for async methods
-
-
-def _complete_slew(device_number: int) -> None:
-    """Background thread: mark slew complete after the simulated slew duration."""
-    sleep(_SLEW_DURATION)
-    update_device_state("telescope", device_number, {"slewing": False})
-
-
-def _complete_slew_to_altaz(device_number: int, target_az: float, target_alt: float) -> None:
-    """Background thread: complete an async AltAz slew.
-
-    Waits for the slew duration, then converts the target alt/az back to RA/Dec
-    at the completion time so that the background coordinate updater will
-    consistently reproduce the correct alt/az on subsequent ticks.
-    """
-    sleep(_SLEW_DURATION)
-    state = get_device_state("telescope", device_number)
-    now = datetime.now(timezone.utc).timestamp()
-    ra, dec = _altaz_to_radec(
-        target_alt,
-        target_az,
-        state.get("sitelatitude", 0.0),
-        state.get("sitelongitude", 0.0),
-        now,
-    )
-    update_device_state(
-        "telescope",
-        device_number,
-        {
-            "slewing": False,
-            "rightascension": ra,
-            "declination": dec,
-            "altitude": target_alt,
-            "azimuth": target_az,
-            "last_motion_update": now,
-        },
-    )
-
 
 def _complete_pulseguide(device_number: int, delay_seconds: float) -> None:
     """Background thread: reset IsPulseGuiding after the guide duration expires."""
@@ -157,6 +118,39 @@ def _altaz_to_radec(
     return ra, dec_deg
 
 
+# Sidereal rate: 24 RA-hours per sidereal day (86164.0905 s).
+_SIDEREAL_RATE_RA_H_PER_S = 24.0 / 86164.0905
+
+
+def compute_coordinate_rates(state: dict) -> tuple[float, float]:
+    """Return the telescope's coordinate-space angular velocity as
+    ``(ra_rate, dec_rate)`` in RA-hours/s and degrees/s for the current
+    tracking / MoveAxis state. Active slews are not considered here.
+
+    This is the single source of truth shared by the motion model
+    (_advance_telescope_motion) and the camera's star-trail rendering, so the
+    image trailing always matches how the reported coordinates move.
+
+    Units:
+      * RightAscensionRate: seconds of RA per sidereal second (÷3600 → RA-hours/s).
+      * DeclinationRate: arcsec per SI second (÷3600 → degrees/s).
+      * MoveAxis rates: deg/s (primary ÷15 → RA-hours/s).
+    The sidereal/SI-second distinction (~0.27%) is ignored; wall-clock seconds are used.
+
+    Tracking on: RA/Dec change only by the rate offsets. Tracking off: RA drifts at the
+    sidereal rate and the offsets are ignored. MoveAxis adds in either case.
+    """
+    if state.get("tracking", False):
+        ra_rate = state.get("rightascensionrate", 0.0) / 3600.0  # sec-of-RA/s → RA-hours/s
+        dec_rate = state.get("declinationrate", 0.0) / 3600.0  # arcsec/s → degrees/s
+    else:
+        ra_rate = _SIDEREAL_RATE_RA_H_PER_S
+        dec_rate = 0.0
+    ra_rate += state.get("moveaxis_primary_rate", 0.0) / 15.0  # deg/s → RA-hours/s
+    dec_rate += state.get("moveaxis_secondary_rate", 0.0)  # deg/s
+    return ra_rate, dec_rate
+
+
 def _advance_telescope_motion(device_number: int) -> None:
     """Advance stored telescope coordinates based on elapsed wall-clock time."""
     state = get_device_state("telescope", device_number)
@@ -171,29 +165,110 @@ def _advance_telescope_motion(device_number: int) -> None:
     if elapsed_seconds <= 0:
         return
 
-    # When tracking is on, RightAscensionRate and DeclinationRate are offsets from
-    # sidereal tracking. The mount compensates for Earth's rotation, so RA only
-    # changes by the offset rate.
-    # When tracking is off, the mount is stationary and RA drifts at the full sidereal
-    # rate (24 RA-hours per sidereal day = 86164.0905 s). Rate offsets are ignored.
-    _SIDEREAL_RATE_RA_H_PER_S = 24.0 / 86164.0905
-    if state.get("tracking", False):
-        ra_rate = state.get("rightascensionrate", 0.0) / 3600.0  # RA-hours/s
-        dec_rate = state.get("declinationrate", 0.0) / 3600.0  # degrees/s
-    else:
-        ra_rate = _SIDEREAL_RATE_RA_H_PER_S
-        dec_rate = 0.0
+    lat = state.get("sitelatitude", 0.0)
+    lon = state.get("sitelongitude", 0.0)
+    slew_rate = state.get("slew_rate", 15.0)  # degrees per second
+
+    # --- Active slew: interpolate toward the stored target at slew_rate deg/s ---
+
+    slew_target_alt = state.get("slew_target_alt")
+    slew_target_az = state.get("slew_target_az")
+    slew_target_ra = state.get("slew_target_ra")
+    slew_target_dec = state.get("slew_target_dec")
+
+    if slew_target_alt is not None and slew_target_az is not None:
+        # AltAz slew: drive in alt/az space, convert result to RA/Dec.
+        current_alt = state.get("altitude", 0.0)
+        current_az = state.get("azimuth", 0.0)
+
+        dalt = slew_target_alt - current_alt
+        daz = slew_target_az - current_az
+        # Shortest angular path in azimuth.
+        if daz > 180.0:
+            daz -= 360.0
+        elif daz < -180.0:
+            daz += 360.0
+
+        total_dist = math.sqrt(dalt**2 + daz**2)
+        max_step = elapsed_seconds * slew_rate
+
+        if total_dist <= max_step or total_dist == 0.0:
+            new_alt = slew_target_alt
+            new_az = slew_target_az
+            slew_complete = True
+        else:
+            frac = max_step / total_dist
+            new_alt = current_alt + frac * dalt
+            new_az = (current_az + frac * daz) % 360.0
+            slew_complete = False
+
+        new_ra, new_dec = _altaz_to_radec(new_alt, new_az, lat, lon, now)
+
+        updates: dict = {
+            "altitude": new_alt,
+            "azimuth": new_az,
+            "rightascension": new_ra,
+            "declination": new_dec,
+            "last_motion_update": now,
+        }
+        if slew_complete:
+            updates["slewing"] = False
+            updates["slew_target_alt"] = None
+            updates["slew_target_az"] = None
+        update_device_state("telescope", device_number, updates)
+        return
+
+    if slew_target_ra is not None and slew_target_dec is not None:
+        # RA/Dec slew: drive in equatorial space, convert result to alt/az.
+        current_ra = state.get("rightascension", 0.0)
+        current_dec = state.get("declination", 0.0)
+
+        dra_deg = (slew_target_ra - current_ra) * 15.0
+        # Shortest angular path in RA.
+        if dra_deg > 180.0:
+            dra_deg -= 360.0
+        elif dra_deg < -180.0:
+            dra_deg += 360.0
+        ddec = slew_target_dec - current_dec
+
+        total_dist = math.sqrt(dra_deg**2 + ddec**2)
+        max_step = elapsed_seconds * slew_rate
+
+        if total_dist <= max_step or total_dist == 0.0:
+            new_ra = slew_target_ra
+            new_dec = slew_target_dec
+            slew_complete = True
+        else:
+            frac = max_step / total_dist
+            new_ra = normalize_hours(current_ra + frac * dra_deg / 15.0)
+            new_dec = normalize_degrees(current_dec + frac * ddec)
+            slew_complete = False
+
+        new_alt, new_az = _radec_to_altaz(new_ra, new_dec, lat, lon, now)
+
+        updates = {
+            "rightascension": new_ra,
+            "declination": new_dec,
+            "altitude": new_alt,
+            "azimuth": new_az,
+            "last_motion_update": now,
+        }
+        if slew_complete:
+            updates["slewing"] = False
+            updates["slew_target_ra"] = None
+            updates["slew_target_dec"] = None
+        update_device_state("telescope", device_number, updates)
+        return
+
+    # --- No active slew: apply normal tracking / MoveAxis rates ---
+
+    # Coordinate-space rates (RA-hours/s, deg/s); see compute_coordinate_rates().
+    ra_rate, dec_rate = compute_coordinate_rates(state)
 
     rightascension = normalize_hours(state.get("rightascension", 0.0) + elapsed_seconds * ra_rate)
     declination = normalize_degrees(state.get("declination", 0.0) + elapsed_seconds * dec_rate)
 
-    altitude, azimuth = _radec_to_altaz(
-        rightascension,
-        declination,
-        state.get("sitelatitude", 0.0),
-        state.get("sitelongitude", 0.0),
-        now,
-    )
+    altitude, azimuth = _radec_to_altaz(rightascension, declination, lat, lon, now)
 
     update_device_state(
         "telescope",
@@ -1122,7 +1197,17 @@ def abortslew(device_number: int = Path(..., ge=0), ClientTransactionID: int = F
     if state.get("atpark", False):
         raise AlpacaError(0x408, "Telescope is parked")
 
-    update_device_state("telescope", device_number, {"slewing": False})
+    update_device_state(
+        "telescope",
+        device_number,
+        {
+            "slewing": False,
+            "slew_target_ra": None,
+            "slew_target_dec": None,
+            "slew_target_alt": None,
+            "slew_target_az": None,
+        },
+    )
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -1231,6 +1316,7 @@ def moveaxis(
 ):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
+
     if state.get("atpark", False):
         raise AlpacaError(0x408, "Telescope is parked")
 
@@ -1239,21 +1325,49 @@ def moveaxis(
         TelescopeAxes.SECONDARY,
         TelescopeAxes.TERTIARY,
     ]:
-        raise AlpacaError(0x401, "Invalid axis")
+        raise AlpacaError(0x401, f"Invalid axis: {Axis}")
 
-    # Validate rate against supported axis rates (Rate=0 always valid)
+    # Rate=0 is always valid (stop command). For non-zero rates, check supported range.
     if Rate != 0.0:
-        axis_rates = state.get(f"axis{Axis}rates", {"Maximum": 1.0, "Minimum": 0.0})
-        max_rate = axis_rates["Maximum"] if isinstance(axis_rates, dict) else axis_rates.Maximum
-        if abs(Rate) > max_rate:
-            raise AlpacaError(0x401, "Rate is outside the valid range for this axis")
+        axis_rates = state.get(f"axis{Axis}rates")
+        if axis_rates is not None:
+            max_rate = (
+                axis_rates["Maximum"] if isinstance(axis_rates, dict) else axis_rates.Maximum
+            )
+            if abs(Rate) > max_rate:
+                raise AlpacaError(0x401, f"Rate {Rate} is outside the valid range for axis {Axis}")
 
-    # Store the axis movement rate and update slewing state
-    update_device_state(
-        "telescope",
-        device_number,
-        {f"axis{Axis}rate": Rate, "slewing": Rate != 0.0},
-    )
+    _AXIS_KEY = {
+        TelescopeAxes.PRIMARY: "primary",
+        TelescopeAxes.SECONDARY: "secondary",
+        TelescopeAxes.TERTIARY: "tertiary",
+    }
+    axis_key = _AXIS_KEY[Axis]
+    rate_key = f"moveaxis_{axis_key}_rate"
+    saved_tracking_key = f"moveaxis_{axis_key}_saved_tracking"
+
+    updates: dict = {}
+
+    if Rate != 0.0:
+        # Save tracking state the first time this axis starts moving so it can be
+        # restored when Rate=0 is called, per the ASCOM specification.
+        if state.get(rate_key, 0.0) == 0.0:
+            updates[saved_tracking_key] = state.get("tracking", False)
+        updates[rate_key] = Rate
+        updates["slewing"] = True
+    else:
+        # Rate=0: stop this axis immediately and restore the previous tracking state.
+        updates[rate_key] = 0.0
+        saved_tracking = state.get(saved_tracking_key)
+        if saved_tracking is not None:
+            updates["tracking"] = saved_tracking
+            updates[saved_tracking_key] = None
+        # Slewing remains True only if another axis is still in motion.
+        other_axes = [k for k in _AXIS_KEY.values() if k != axis_key]
+        any_moving = any(state.get(f"moveaxis_{ax}_rate", 0.0) != 0.0 for ax in other_axes)
+        updates["slewing"] = any_moving
+
+    update_device_state("telescope", device_number, updates)
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -1438,18 +1552,19 @@ def slewtoaltazasync(
     if Azimuth < 0.0 or Azimuth > 360.0:
         raise AlpacaError(0x401, "Azimuth must be between 0 and 360 degrees")
 
-    # Start async slew – final RA/Dec is resolved at completion time by the thread
+    # Start async slew – background loop interpolates toward the AltAz target.
     update_device_state(
         "telescope",
         device_number,
-        {"azimuth": Azimuth, "altitude": Altitude, "slewing": True, "atpark": False},
+        {
+            "slew_target_alt": Altitude,
+            "slew_target_az": Azimuth,
+            "slew_target_ra": None,
+            "slew_target_dec": None,
+            "slewing": True,
+            "atpark": False,
+        },
     )
-
-    threading.Thread(
-        target=_complete_slew_to_altaz,
-        args=(device_number, Azimuth, Altitude),
-        daemon=True,
-    ).start()
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -1512,21 +1627,21 @@ def slewtocoordinatesasync(
     if Declination < -90.0 or Declination > 90.0:
         raise AlpacaError(0x401, "Declination must be between -90 and +90 degrees")
 
-    # Set position and targets immediately, flag as slewing, return without blocking
+    # Start async slew – background loop interpolates toward the RA/Dec target.
     update_device_state(
         "telescope",
         device_number,
         {
-            "rightascension": RightAscension,
-            "declination": Declination,
+            "slew_target_ra": RightAscension,
+            "slew_target_dec": Declination,
+            "slew_target_alt": None,
+            "slew_target_az": None,
             "targetrightascension": RightAscension,
             "targetdeclination": Declination,
             "slewing": True,
             "atpark": False,
         },
     )
-
-    threading.Thread(target=_complete_slew, args=(device_number,), daemon=True).start()
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -1577,19 +1692,19 @@ def slewtotargetasync(device_number: int = Path(..., ge=0), ClientTransactionID:
     if target_ra is None or target_dec is None:
         raise AlpacaError(0x402, "Target coordinates not set")
 
-    # Set final position immediately, flag as slewing, return without blocking
+    # Start async slew – background loop interpolates toward the RA/Dec target.
     update_device_state(
         "telescope",
         device_number,
         {
-            "rightascension": target_ra,
-            "declination": target_dec,
+            "slew_target_ra": target_ra,
+            "slew_target_dec": target_dec,
+            "slew_target_alt": None,
+            "slew_target_az": None,
             "slewing": True,
             "atpark": False,
         },
     )
-
-    threading.Thread(target=_complete_slew, args=(device_number,), daemon=True).start()
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
