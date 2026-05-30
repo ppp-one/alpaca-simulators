@@ -71,6 +71,12 @@ async def exposure_task(device_number: int, duration: float, light: bool):
     """Background task to simulate camera exposure"""
     global image_cache
     try:
+        # Snapshot the telescope state at shutter-open time.  This must happen
+        # before the sleep loop so that the coordinates and motion rates captured
+        # reflect the moment the exposure started, not the moment the image is
+        # generated (by which time MoveAxis may have been stopped or changed).
+        tel_state_at_open = get_device_state("telescope", 0)
+
         # Update camera state to exposing
         update_device_state(
             "camera",
@@ -98,7 +104,7 @@ async def exposure_task(device_number: int, duration: float, light: bool):
 
         # Generate image using cabaret
         cam_state = get_device_state("camera", device_number)
-        tel_state = get_device_state("telescope", 0)  # Assume telescope 0
+        tel_state = get_device_state("telescope", 0)  # for hardware properties
         focuser_state = get_device_state("focuser", 0)  # Assume focuser 0
 
         # Calculate seeing multiplier based on focuser position
@@ -107,11 +113,12 @@ async def exposure_task(device_number: int, duration: float, light: bool):
         if seeing_multiplier > 5:
             seeing_multiplier = 5
 
-        # Get current coordinates from telescope
+        # Use shutter-open coordinates so the image is centred on where the
+        # telescope was pointing when the exposure started, not when it ended.
         pointing_error_ra = Config().load().get("pointing_error_ra", 0.0)  # arcmin
         pointing_error_dec = Config().load().get("pointing_error_dec", 0.0)  # arcmin
-        ra = tel_state.get("rightascension", 0.0) + (pointing_error_ra / 60) / 15
-        dec = tel_state.get("declination", 0.0) + (pointing_error_dec / 60)
+        ra = tel_state_at_open.get("rightascension", 0.0) + (pointing_error_ra / 60) / 15
+        dec = tel_state_at_open.get("declination", 0.0) + (pointing_error_dec / 60)
         # gaia breaks
         if dec >= 90.0 or dec <= -90.0:
             dec = 89.99 if dec >= 0 else -89.99
@@ -158,7 +165,7 @@ async def exposure_task(device_number: int, duration: float, light: bool):
         bad_tracking = Config().load().get("bad_tracking", False)
         if bad_tracking:
             bad_tracking_rate = Config().load().get("bad_tracking_rate", 0.01)  # arcsec per second
-            last_slew_time = tel_state.get("last_slew_time", datetime.now(timezone.utc))
+            last_slew_time = tel_state_at_open.get("last_slew_time", datetime.now(timezone.utc))
             # drift RA/Dec based on time since last slew
             time_elapsed = (datetime.now(timezone.utc) - last_slew_time).total_seconds()
             ra += time_elapsed * (bad_tracking_rate / 3600) / 15  # convert to hours
@@ -172,13 +179,14 @@ async def exposure_task(device_number: int, duration: float, light: bool):
         # rightascensionrate is RA-seconds/sidereal-second; × 15 converts to arcsec/s.
         # declinationrate is already arcseconds/sidereal-second ≈ arcsec/s.
         # MoveAxis rates are in deg/s; × 3600 converts to arcsec/s.
+        # All rates are taken from the shutter-open snapshot.
         tracking_ra_rate = (
-            tel_state.get("rightascensionrate", 0.0) * 15.0
-            + tel_state.get("moveaxis_primary_rate", 0.0) * 3600.0
+            tel_state_at_open.get("rightascensionrate", 0.0) * 15.0
+            + tel_state_at_open.get("moveaxis_primary_rate", 0.0) * 3600.0
         )
         tracking_dec_rate = (
-            tel_state.get("declinationrate", 0.0)
-            + tel_state.get("moveaxis_secondary_rate", 0.0) * 3600.0
+            tel_state_at_open.get("declinationrate", 0.0)
+            + tel_state_at_open.get("moveaxis_secondary_rate", 0.0) * 3600.0
         )
 
         # Generate star field image
