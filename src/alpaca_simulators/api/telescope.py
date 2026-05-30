@@ -28,8 +28,6 @@ from alpaca_simulators.state import (
 
 router = APIRouter()
 
-_DEFAULT_SLEW_RATE = 3.0  # degrees per second – fallback if not set in config
-
 
 def _complete_pulseguide(device_number: int, delay_seconds: float) -> None:
     """Background thread: reset IsPulseGuiding after the guide duration expires."""
@@ -169,7 +167,7 @@ def _advance_telescope_motion(device_number: int) -> None:
 
     lat = state.get("sitelatitude", 0.0)
     lon = state.get("sitelongitude", 0.0)
-    slew_rate = state.get("slew_rate", _DEFAULT_SLEW_RATE)
+    slew_rate = state.get("slew_rate", 15.0)  # degrees per second
 
     # --- Active slew: interpolate toward the stored target at slew_rate deg/s ---
 
