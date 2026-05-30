@@ -171,8 +171,15 @@ async def exposure_task(device_number: int, duration: float, light: bool):
         # here to simulate trailing from non-sidereal tracking.
         # rightascensionrate is RA-seconds/sidereal-second; × 15 converts to arcsec/s.
         # declinationrate is already arcseconds/sidereal-second ≈ arcsec/s.
-        tracking_ra_rate = tel_state.get("rightascensionrate", 0.0) * 15.0
-        tracking_dec_rate = tel_state.get("declinationrate", 0.0)
+        # MoveAxis rates are in deg/s; × 3600 converts to arcsec/s.
+        tracking_ra_rate = (
+            tel_state.get("rightascensionrate", 0.0) * 15.0
+            + tel_state.get("moveaxis_primary_rate", 0.0) * 3600.0
+        )
+        tracking_dec_rate = (
+            tel_state.get("declinationrate", 0.0)
+            + tel_state.get("moveaxis_secondary_rate", 0.0) * 3600.0
+        )
 
         # Generate star field image
         key = make_cache_key(
