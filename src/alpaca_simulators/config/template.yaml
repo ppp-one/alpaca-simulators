@@ -28,7 +28,7 @@ devices:
       fastreadout: false
       fullwellcapacity: 50000
       gain: 1
-      gains: ["High", "Medium", "Low"]
+      gains: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
       hasshutter: true
       heatsinktemperature: 25.0
       maxadu: 65535
@@ -40,7 +40,7 @@ devices:
       readoutmode: 0
       readoutmodes: ["Fast", "Normal", "High Quality"]
       sensorname: "Simulator Sensor"
-      sensortype: 1  # Monochrome
+      sensortype: 0  # Monochrome
       offset: 1
       offsets: ["Low", "Medium", "High"]
       bayeroffsetx: 0

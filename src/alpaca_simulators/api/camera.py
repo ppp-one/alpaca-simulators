@@ -171,12 +171,8 @@ async def exposure_task(device_number: int, duration: float, light: bool):
         # here to simulate trailing from non-sidereal tracking.
         # rightascensionrate is RA-seconds/sidereal-second; × 15 converts to arcsec/s.
         # declinationrate is already arcseconds/sidereal-second ≈ arcsec/s.
-        if tel_state.get("tracking", False):
-            tracking_ra_rate = tel_state.get("rightascensionrate", 0.0) * 15.0
-            tracking_dec_rate = tel_state.get("declinationrate", 0.0)
-        else:
-            tracking_ra_rate = 0.0
-            tracking_dec_rate = 0.0
+        tracking_ra_rate = tel_state.get("rightascensionrate", 0.0) * 15.0
+        tracking_dec_rate = tel_state.get("declinationrate", 0.0)
 
         # Generate star field image
         key = make_cache_key(
@@ -961,7 +957,7 @@ def set_gain(
     if Gain < 0 or Gain >= len(gains):
         raise AlpacaError(0x401, f"Gain index out of range (0 to {len(gains) - 1})")
 
-    update_device_state("camera", device_number, {"gain": Gain})
+    update_device_state("camera", device_number, {"gain": Gain + 1})
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
