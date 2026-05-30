@@ -28,7 +28,7 @@ from alpaca_simulators.state import (
 
 router = APIRouter()
 
-_SLEW_RATE = 3.0  # degrees per second – interpolated slew speed
+_DEFAULT_SLEW_RATE = 3.0  # degrees per second – fallback if not set in config
 
 
 def _complete_pulseguide(device_number: int, delay_seconds: float) -> None:
@@ -136,8 +136,9 @@ def _advance_telescope_motion(device_number: int) -> None:
 
     lat = state.get("sitelatitude", 0.0)
     lon = state.get("sitelongitude", 0.0)
+    slew_rate = state.get("slew_rate", _DEFAULT_SLEW_RATE)
 
-    # --- Active slew: interpolate toward the stored target at _SLEW_RATE deg/s ---
+    # --- Active slew: interpolate toward the stored target at slew_rate deg/s ---
 
     slew_target_alt = state.get("slew_target_alt")
     slew_target_az = state.get("slew_target_az")
@@ -158,7 +159,7 @@ def _advance_telescope_motion(device_number: int) -> None:
             daz += 360.0
 
         total_dist = math.sqrt(dalt**2 + daz**2)
-        max_step = elapsed_seconds * _SLEW_RATE
+        max_step = elapsed_seconds * slew_rate
 
         if total_dist <= max_step or total_dist == 0.0:
             new_alt = slew_target_alt
@@ -200,7 +201,7 @@ def _advance_telescope_motion(device_number: int) -> None:
         ddec = slew_target_dec - current_dec
 
         total_dist = math.sqrt(dra_deg**2 + ddec**2)
-        max_step = elapsed_seconds * _SLEW_RATE
+        max_step = elapsed_seconds * slew_rate
 
         if total_dist <= max_step or total_dist == 0.0:
             new_ra = slew_target_ra
