@@ -7,6 +7,7 @@ from fastapi import APIRouter, BackgroundTasks, Form, Path, Query
 from fastapi.responses import StreamingResponse
 
 from alpaca_simulators.api.common import AlpacaError, validate_device
+from alpaca_simulators.api.telescope import compute_coordinate_rates
 from alpaca_simulators.config import Config
 from alpaca_simulators.state import (
     AlpacaResponse,
@@ -171,23 +172,15 @@ async def exposure_task(device_number: int, duration: float, light: bool):
             ra += time_elapsed * (bad_tracking_rate / 3600) / 15  # convert to hours
             dec += time_elapsed * bad_tracking_rate / 3600
 
-        # Convert ASCOM tracking rates to arcseconds per second for cabaret.
-        # RightAscensionRate and DeclinationRate are ASCOM offsets from sidereal tracking.
-        # The pointing coordinates (ra/dec) already account for sidereal drift via
-        # _advance_telescope_motion in telescope.py, so only the rate offsets are passed
-        # here to simulate trailing from non-sidereal tracking.
-        # rightascensionrate is RA-seconds/sidereal-second; × 15 converts to arcsec/s.
-        # declinationrate is already arcseconds/sidereal-second ≈ arcsec/s.
-        # MoveAxis rates are in deg/s; × 3600 converts to arcsec/s.
-        # All rates are taken from the shutter-open snapshot.
-        tracking_ra_rate = (
-            tel_state_at_open.get("rightascensionrate", 0.0) * 15.0
-            + tel_state_at_open.get("moveaxis_primary_rate", 0.0) * 3600.0
-        )
-        tracking_dec_rate = (
-            tel_state_at_open.get("declinationrate", 0.0)
-            + tel_state_at_open.get("moveaxis_secondary_rate", 0.0) * 3600.0
-        )
+        # On-sky rates for cabaret's star trails. cabaret's add_stars() wants arcsec/s,
+        # with RA as dα·cos(δ)/dt. compute_coordinate_rates() (telescope.py) gives the
+        # coordinate-space rates from the shutter-open snapshot; convert to on-sky here.
+        ra_rate_h, dec_rate_deg = compute_coordinate_rates(tel_state_at_open)
+
+        # Coordinate-space rates → on-sky arcsec/s (RA: RA-hours/s ×54000 ×cos δ).
+        cos_dec = np.cos(np.radians(dec))
+        tracking_ra_rate = ra_rate_h * 54000.0 * cos_dec
+        tracking_dec_rate = dec_rate_deg * 3600.0
 
         # Generate star field image
         key = make_cache_key(

@@ -112,7 +112,7 @@ devices:
       sitelongitude: 8.0
       slewing: false
       slewsettletime: 0.0
-      slew_rate: 3.0  # degrees per second
+      slew_rate: 15.0  # degrees per second
       tracking: false
       trackingrate: 0  # Sidereal
       axis0rates:

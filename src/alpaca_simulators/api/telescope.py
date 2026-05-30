@@ -120,6 +120,39 @@ def _altaz_to_radec(
     return ra, dec_deg
 
 
+# Sidereal rate: 24 RA-hours per sidereal day (86164.0905 s).
+_SIDEREAL_RATE_RA_H_PER_S = 24.0 / 86164.0905
+
+
+def compute_coordinate_rates(state: dict) -> tuple[float, float]:
+    """Return the telescope's coordinate-space angular velocity as
+    ``(ra_rate, dec_rate)`` in RA-hours/s and degrees/s for the current
+    tracking / MoveAxis state. Active slews are not considered here.
+
+    This is the single source of truth shared by the motion model
+    (_advance_telescope_motion) and the camera's star-trail rendering, so the
+    image trailing always matches how the reported coordinates move.
+
+    Units:
+      * RightAscensionRate: seconds of RA per sidereal second (÷3600 → RA-hours/s).
+      * DeclinationRate: arcsec per SI second (÷3600 → degrees/s).
+      * MoveAxis rates: deg/s (primary ÷15 → RA-hours/s).
+    The sidereal/SI-second distinction (~0.27%) is ignored; wall-clock seconds are used.
+
+    Tracking on: RA/Dec change only by the rate offsets. Tracking off: RA drifts at the
+    sidereal rate and the offsets are ignored. MoveAxis adds in either case.
+    """
+    if state.get("tracking", False):
+        ra_rate = state.get("rightascensionrate", 0.0) / 3600.0  # sec-of-RA/s → RA-hours/s
+        dec_rate = state.get("declinationrate", 0.0) / 3600.0  # arcsec/s → degrees/s
+    else:
+        ra_rate = _SIDEREAL_RATE_RA_H_PER_S
+        dec_rate = 0.0
+    ra_rate += state.get("moveaxis_primary_rate", 0.0) / 15.0  # deg/s → RA-hours/s
+    dec_rate += state.get("moveaxis_secondary_rate", 0.0)  # deg/s
+    return ra_rate, dec_rate
+
+
 def _advance_telescope_motion(device_number: int) -> None:
     """Advance stored telescope coordinates based on elapsed wall-clock time."""
     state = get_device_state("telescope", device_number)
@@ -231,24 +264,8 @@ def _advance_telescope_motion(device_number: int) -> None:
 
     # --- No active slew: apply normal tracking / MoveAxis rates ---
 
-    # When tracking is on, RightAscensionRate and DeclinationRate are offsets from
-    # sidereal tracking. The mount compensates for Earth's rotation, so RA only
-    # changes by the offset rate.
-    # When tracking is off, the mount is stationary and RA drifts at the full sidereal
-    # rate (24 RA-hours per sidereal day = 86164.0905 s). Rate offsets are ignored.
-    _SIDEREAL_RATE_RA_H_PER_S = 24.0 / 86164.0905
-    if state.get("tracking", False):
-        ra_rate = state.get("rightascensionrate", 0.0) / 3600.0  # RA-hours/s
-        dec_rate = state.get("declinationrate", 0.0) / 3600.0  # degrees/s
-    else:
-        ra_rate = _SIDEREAL_RATE_RA_H_PER_S
-        dec_rate = 0.0
-
-    # MoveAxis contributions are added independently of tracking state.
-    # Primary axis rate is in degrees/s; convert to RA-hours/s.
-    # Secondary axis rate is in degrees/s, same unit as Dec.
-    ra_rate += state.get("moveaxis_primary_rate", 0.0) / 15.0
-    dec_rate += state.get("moveaxis_secondary_rate", 0.0)
+    # Coordinate-space rates (RA-hours/s, deg/s); see compute_coordinate_rates().
+    ra_rate, dec_rate = compute_coordinate_rates(state)
 
     rightascension = normalize_hours(state.get("rightascension", 0.0) + elapsed_seconds * ra_rate)
     declination = normalize_degrees(state.get("declination", 0.0) + elapsed_seconds * dec_rate)
