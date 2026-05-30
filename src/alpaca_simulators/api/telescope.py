@@ -184,6 +184,12 @@ def _advance_telescope_motion(device_number: int) -> None:
         ra_rate = _SIDEREAL_RATE_RA_H_PER_S
         dec_rate = 0.0
 
+    # MoveAxis contributions are added independently of tracking state.
+    # Primary axis rate is in degrees/s; convert to RA-hours/s.
+    # Secondary axis rate is in degrees/s, same unit as Dec.
+    ra_rate += state.get("moveaxis_primary_rate", 0.0) / 15.0
+    dec_rate += state.get("moveaxis_secondary_rate", 0.0)
+
     rightascension = normalize_hours(state.get("rightascension", 0.0) + elapsed_seconds * ra_rate)
     declination = normalize_degrees(state.get("declination", 0.0) + elapsed_seconds * dec_rate)
 
@@ -1231,6 +1237,7 @@ def moveaxis(
 ):
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
+
     if state.get("atpark", False):
         raise AlpacaError(0x408, "Telescope is parked")
 
@@ -1239,21 +1246,49 @@ def moveaxis(
         TelescopeAxes.SECONDARY,
         TelescopeAxes.TERTIARY,
     ]:
-        raise AlpacaError(0x401, "Invalid axis")
+        raise AlpacaError(0x401, f"Invalid axis: {Axis}")
 
-    # Validate rate against supported axis rates (Rate=0 always valid)
+    # Rate=0 is always valid (stop command). For non-zero rates, check supported range.
     if Rate != 0.0:
-        axis_rates = state.get(f"axis{Axis}rates", {"Maximum": 1.0, "Minimum": 0.0})
-        max_rate = axis_rates["Maximum"] if isinstance(axis_rates, dict) else axis_rates.Maximum
-        if abs(Rate) > max_rate:
-            raise AlpacaError(0x401, "Rate is outside the valid range for this axis")
+        axis_rates = state.get(f"axis{Axis}rates")
+        if axis_rates is not None:
+            max_rate = (
+                axis_rates["Maximum"] if isinstance(axis_rates, dict) else axis_rates.Maximum
+            )
+            if abs(Rate) > max_rate:
+                raise AlpacaError(0x401, f"Rate {Rate} is outside the valid range for axis {Axis}")
 
-    # Store the axis movement rate and update slewing state
-    update_device_state(
-        "telescope",
-        device_number,
-        {f"axis{Axis}rate": Rate, "slewing": Rate != 0.0},
-    )
+    _AXIS_KEY = {
+        TelescopeAxes.PRIMARY: "primary",
+        TelescopeAxes.SECONDARY: "secondary",
+        TelescopeAxes.TERTIARY: "tertiary",
+    }
+    axis_key = _AXIS_KEY[Axis]
+    rate_key = f"moveaxis_{axis_key}_rate"
+    saved_tracking_key = f"moveaxis_{axis_key}_saved_tracking"
+
+    updates: dict = {}
+
+    if Rate != 0.0:
+        # Save tracking state the first time this axis starts moving so it can be
+        # restored when Rate=0 is called, per the ASCOM specification.
+        if state.get(rate_key, 0.0) == 0.0:
+            updates[saved_tracking_key] = state.get("tracking", False)
+        updates[rate_key] = Rate
+        updates["slewing"] = True
+    else:
+        # Rate=0: stop this axis immediately and restore the previous tracking state.
+        updates[rate_key] = 0.0
+        saved_tracking = state.get(saved_tracking_key)
+        if saved_tracking is not None:
+            updates["tracking"] = saved_tracking
+            updates[saved_tracking_key] = None
+        # Slewing remains True only if another axis is still in motion.
+        other_axes = [k for k in _AXIS_KEY.values() if k != axis_key]
+        any_moving = any(state.get(f"moveaxis_{ax}_rate", 0.0) != 0.0 for ax in other_axes)
+        updates["slewing"] = any_moving
+
+    update_device_state("telescope", device_number, updates)
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,

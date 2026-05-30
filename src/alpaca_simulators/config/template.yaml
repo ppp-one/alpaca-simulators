@@ -115,13 +115,13 @@ devices:
       tracking: false
       trackingrate: 0  # Sidereal
       axis0rates:
-        Maximum: 1.0
+        Maximum: 10.0
         Minimum: 0.0
       axis1rates:
-        Maximum: 1.0
+        Maximum: 10.0
         Minimum: 0.0
       axis2rates:
-        Maximum: 1.0
+        Maximum: 10.0
         Minimum: 0.0
 
   dome:
