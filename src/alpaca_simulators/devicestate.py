@@ -39,6 +39,7 @@ DEVICE_STATE_PROPERTIES: dict[str, dict[str, str]] = {
         "IsPulseGuiding": "ispulseguiding",
         "RightAscension": "rightascension",
         "SideOfPier": "sideofpier",
+        "SiderealTime": "siderealtime",
         "Slewing": "slewing",
         "Tracking": "tracking",
         "UTCDate": "utcdate",
@@ -89,6 +90,31 @@ DEVICE_STATE_PROPERTIES: dict[str, dict[str, str]] = {
 }
 
 
+def local_sidereal_time(longitude: float) -> float:
+    """Return the local sidereal time in hours for one site longitude in degrees.
+
+    Simplified calculation - in practice this would use proper astronomy formulas.
+    """
+    utc_now = datetime.now(timezone.utc)
+    jd = utc_now.timestamp() / 86400.0 + 2440587.5  # Julian day
+    gmst = 18.697374558 + 24.06570982441908 * (jd - 2451545.0)  # Greenwich Mean Sidereal Time
+
+    return (gmst + longitude / 15.0) % 24.0
+
+
+def _derived_state(device_type: str, state: dict[str, Any]) -> dict[str, Any]:
+    """Return operational values computed on read rather than stored in device state.
+
+    Some properties are calculated by their endpoint on every request and never
+    written back to the stored state, which holds only the configuration seed. They
+    must be recomputed here or DeviceState would publish that stale seed.
+    """
+    if device_type == "telescope":
+        return {"siderealtime": local_sidereal_time(state.get("sitelongitude", 0.0))}
+
+    return {}
+
+
 def build_device_state(device_type: str, state: dict[str, Any]) -> list[dict[str, Any]]:
     """Build the ASCOM Alpaca DeviceState value: an array of {Name, Value} objects.
 
@@ -96,10 +122,11 @@ def build_device_state(device_type: str, state: dict[str, Any]) -> list[dict[str
     interface-correct casing), skipping any whose state value is not known, and
     always appends a mandatory ISO-8601 TimeStamp entry.
     """
+    values = {**state, **_derived_state(device_type, state)}
     items: list[dict[str, Any]] = [
-        {"Name": name, "Value": state[key]}
+        {"Name": name, "Value": values[key]}
         for name, key in DEVICE_STATE_PROPERTIES.get(device_type, {}).items()
-        if key in state
+        if key in values
     ]
     items.append({"Name": "TimeStamp", "Value": datetime.now(timezone.utc).isoformat()})
 
