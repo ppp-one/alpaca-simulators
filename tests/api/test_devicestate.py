@@ -62,7 +62,14 @@ class TestDeviceState:
         """Non-operational metadata must not appear in DeviceState."""
         data = _devicestate("focuser")
         names = {item["Name"] for item in data["Value"]}
-        for metadata in ("Name", "Description", "DriverInfo", "DriverVersion", "InterfaceVersion", "Connected"):
+        for metadata in (
+            "Name",
+            "Description",
+            "DriverInfo",
+            "DriverVersion",
+            "InterfaceVersion",
+            "Connected",
+        ):
             assert metadata not in names
         # Internal lowercase keys must not leak through either.
         for internal in ("name", "description", "driverinfo", "connected"):
