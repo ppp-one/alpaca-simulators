@@ -52,8 +52,19 @@ class ImageArrayResponse(AlpacaResponse):
     Value: list[list[int]]
 
 
+class DeviceStateItem(BaseModel):
+    """A single operational-state property, per the ASCOM Alpaca DeviceState spec.
+
+    See AlpacaDeviceAPI_v1.yaml (DeviceStateResponse) and
+    https://ascom-standards.org/newdocs/focuser.html#Focuser.DeviceState
+    """
+
+    Name: str
+    Value: Any
+
+
 class DeviceStateResponse(AlpacaResponse):
-    Value: dict[str, Any]
+    Value: list[DeviceStateItem]
 
 
 class Rate(BaseModel):

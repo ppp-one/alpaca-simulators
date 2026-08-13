@@ -6,6 +6,7 @@ from time import sleep
 from fastapi import APIRouter, Form, Path, Query
 
 from alpaca_simulators.api.common import AlpacaError, validate_device
+from alpaca_simulators.devicestate import local_sidereal_time
 from alpaca_simulators.state import (
     AlignmentModes,
     AlpacaResponse,
@@ -849,14 +850,8 @@ def get_siderealtime(device_number: int = Path(..., ge=0), ClientTransactionID: 
     validate_device("telescope", device_number)
     state = get_device_state("telescope", device_number)
 
-    # Calculate local sidereal time
-    utc_now = datetime.now(timezone.utc)
-    longitude = state.get("sitelongitude", 0.0)
-
-    # Simplified calculation - in practice this would use proper astronomy formulas
-    jd = utc_now.timestamp() / 86400.0 + 2440587.5  # Julian day
-    gmst = 18.697374558 + 24.06570982441908 * (jd - 2451545.0)  # Greenwich Mean Sidereal Time
-    lst = (gmst + longitude / 15.0) % 24.0  # Local Sidereal Time
+    # Shared with DeviceState so both paths report the same local sidereal time
+    lst = local_sidereal_time(state.get("sitelongitude", 0.0))
 
     return DoubleResponse(
         Value=lst,
