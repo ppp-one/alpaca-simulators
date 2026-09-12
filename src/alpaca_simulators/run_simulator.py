@@ -23,6 +23,17 @@ def parse_args() -> argparse.Namespace:
         default=False,
         help="Enable auto-reload for development.",
     )
+    parser.add_argument(
+        "--timeout-keep-alive",
+        type=int,
+        default=300,
+        help=(
+            "Seconds an idle keep-alive connection is held open (default: 300). "
+            "Must exceed the slowest client poll interval. Uvicorn's own default "
+            "of 5 s closes idle connections so often that a polling client hits "
+            "the close while sending and reports a connection reset."
+        ),
+    )
 
     return parser.parse_args()
 
@@ -41,6 +52,7 @@ def main():
         host=args.host,
         port=args.port,
         reload=args.reload,
+        timeout_keep_alive=args.timeout_keep_alive,
     )
 
 
