@@ -49,12 +49,19 @@
         }
         .accordion-header::after { content: '▼'; transition: transform 0.2s ease-in-out; }
         .accordion.open .accordion-header::after { transform: rotate(180deg); }
+        /* The open panel takes its height from its own content, so it stays
+           correct when a response box grows or the window is resized. Do not
+           animate a measured pixel height here: that value goes stale and
+           clips the content. */
         .accordion-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-in-out;
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.3s ease-in-out;
             padding: 0 1rem;
         }
+        .accordion.open .accordion-content { grid-template-rows: 1fr; }
+        /* min-height lets the row shrink below its content while collapsed. */
+        .accordion-content > * { overflow: hidden; min-height: 0; }
         .endpoint-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -159,12 +166,6 @@
                 header.textContent = device.charAt(0).toUpperCase() + device.slice(1);
                 header.onclick = () => {
                     accordion.classList.toggle('open');
-                    const content = accordion.querySelector('.accordion-content');
-                    if (accordion.classList.contains('open')) {
-                        content.style.maxHeight = content.scrollHeight + "px";
-                    } else {
-                        content.style.maxHeight = '0';
-                    }
                 };
 
                 const content = document.createElement('div');
