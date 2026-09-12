@@ -142,18 +142,32 @@ async def general_exception_handler(request: Request, exc: Exception):
     )
 
 
+API_PREFIX = "/api/v1"
+
+# (router, prefix, tag) for every device API router. This list drives both the
+# router registration below and the endpoint discovery used by the test
+# interface, so discovery does not depend on how a FastAPI version stores
+# included routes in app.routes.
+ROUTERS = [
+    (common.router, API_PREFIX, "Common"),
+    (camera.router, API_PREFIX, "Camera"),
+    (safetymonitor.router, API_PREFIX, "SafetyMonitor"),
+    (filterwheel.router, API_PREFIX, "FilterWheel"),
+    (focuser.router, API_PREFIX, "Focuser"),
+    (rotator.router, API_PREFIX, "Rotator"),
+    (switch.router, API_PREFIX, "Switch"),
+    (observingconditions.router, API_PREFIX, "ObservingConditions"),
+    (covercalibrator.router, API_PREFIX, "CoverCalibrator"),
+    (telescope.router, API_PREFIX, "Telescope"),
+    (dome.router, API_PREFIX, "Dome"),
+]
+
+# Routers paired with their mount prefix, for endpoint discovery.
+DISCOVERY_ROUTERS = [(router, prefix) for router, prefix, _ in ROUTERS]
+
 # Include routers
-app.include_router(common.router, prefix="/api/v1", tags=["Common"])
-app.include_router(camera.router, prefix="/api/v1", tags=["Camera"])
-app.include_router(safetymonitor.router, prefix="/api/v1", tags=["SafetyMonitor"])
-app.include_router(filterwheel.router, prefix="/api/v1", tags=["FilterWheel"])
-app.include_router(focuser.router, prefix="/api/v1", tags=["Focuser"])
-app.include_router(rotator.router, prefix="/api/v1", tags=["Rotator"])
-app.include_router(switch.router, prefix="/api/v1", tags=["Switch"])
-app.include_router(observingconditions.router, prefix="/api/v1", tags=["ObservingConditions"])
-app.include_router(covercalibrator.router, prefix="/api/v1", tags=["CoverCalibrator"])
-app.include_router(telescope.router, prefix="/api/v1", tags=["Telescope"])
-app.include_router(dome.router, prefix="/api/v1", tags=["Dome"])
+for router, prefix, tag in ROUTERS:
+    app.include_router(router, prefix=prefix, tags=[tag])
 
 
 @app.get("/")
@@ -173,7 +187,7 @@ async def root():
 async def test_interface(request: Request):
     """Dynamic test interface for all devices"""
     # Discover available endpoints dynamically
-    endpoints = discover_device_endpoints(app)
+    endpoints = discover_device_endpoints(DISCOVERY_ROUTERS)
 
     return templates.TemplateResponse(
         request,
@@ -237,7 +251,7 @@ async def api_info():
 @app.get("/api/endpoints")
 async def get_discovered_endpoints():
     """Return discovered endpoints for all device types"""
-    endpoints = discover_device_endpoints(app)
+    endpoints = discover_device_endpoints(DISCOVERY_ROUTERS)
     return {
         "discovered_endpoints": endpoints,
         "summary": {

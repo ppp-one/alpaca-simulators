@@ -1,71 +1,87 @@
 """
 Dynamic endpoint discovery for the observatory simulator.
-Analyzes the FastAPI application to determine available endpoints for each device type.
+Analyzes the API routers to determine available endpoints for each device type.
 """
 
 import inspect
+from collections.abc import Iterable
 
-from fastapi import FastAPI
+from fastapi import APIRouter
 
 
-def discover_device_endpoints(app: FastAPI) -> dict[str, dict[str, list[str]]]:
+def _iter_routes(routers: Iterable[tuple[APIRouter, str]]):
     """
-    Discover all available endpoints for each device type by analyzing the FastAPI routes.
+    Yield (path, methods, endpoint) for every route in the given routers.
 
-    Returns a dictionary mapping device types to their available GET and PUT endpoints.
+    Each router is paired with the prefix it is mounted under, so the paths
+    match the ones the application serves.
+
+    Discovery reads the routers directly instead of ``app.routes``. FastAPI
+    changed how ``include_router`` stores sub-routes: older versions copy the
+    sub-routes into ``app.routes``, newer versions append a single lazy object
+    per router. Reading the routers works with both.
+    """
+    for router, prefix in routers:
+        for route in router.routes:
+            if hasattr(route, "path") and hasattr(route, "methods") and hasattr(route, "endpoint"):
+                yield f"{prefix}{route.path}", route.methods, route.endpoint
+
+
+def discover_device_endpoints(
+    routers: Iterable[tuple[APIRouter, str]],
+) -> dict[str, dict[str, list[str]]]:
+    """
+    Discover all available endpoints for each device type.
+
+    Takes an iterable of (router, prefix) pairs, where prefix is the path the
+    router is mounted under.
+
+    Returns a dictionary mapping device types to their available GET and PUT
+    endpoints.
     """
     device_endpoints = {}
 
-    # Extract routes from the FastAPI app
-    for route in app.routes:
-        if hasattr(route, "path") and hasattr(route, "methods"):
-            path = route.path
-            methods = route.methods
+    for path, methods, endpoint_func in _iter_routes(routers):
+        # Analyze function signature
+        sig = inspect.signature(endpoint_func)
 
-            # Get the endpoint function
-            endpoint_func = route.endpoint
+        # Parse device-specific endpoints
+        device_type = path.split("/")[3] if len(path.split("/")) > 3 else None
+        if f"/{device_type}/" in path and "/{device_number}/" in path:
+            # Extract the property name from the path
+            # Example: /api/v1/camera/{device_number}/temperature -> temperature
+            path_parts = path.split("/")
+            if len(path_parts) >= 5:  # /api/v1/device/{device_number}/property
+                property_name = path_parts[-1]
 
-            # Analyze function signature
-            sig = inspect.signature(endpoint_func)
+                # Skip if it's just a device number
+                if property_name == "{device_number}":
+                    continue
 
-            # Parse device-specific endpoints
-            # for device_type in device_modules.keys():
-            device_type = path.split("/")[3] if len(path.split("/")) > 3 else None
-            if f"/{device_type}/" in path and "/{device_number}/" in path:
-                # Extract the property name from the path
-                # Example: /api/v1/camera/{device_number}/temperature -> temperature
-                path_parts = path.split("/")
-                if len(path_parts) >= 5:  # /api/v1/device/{device_number}/property
-                    property_name = path_parts[-1]
+                params = []
+                for param_name, param in sig.parameters.items():
+                    if param_name not in [
+                        "device_number",
+                        "ClientTransactionID",
+                    ]:
+                        params.append({"name": param_name, "type": param.annotation.__name__})
 
-                    # Skip if it's just a device number
-                    if property_name == "{device_number}":
-                        continue
+                # Initialize device entry if not exists
+                if device_type not in device_endpoints:
+                    device_endpoints[device_type] = {
+                        "GET": [],
+                        "PUT": [],
+                        "info": {},
+                    }
 
-                    params = []
-                    for param_name, param in sig.parameters.items():
-                        if param_name not in [
-                            "device_number",
-                            "ClientTransactionID",
-                        ]:
-                            params.append({"name": param_name, "type": param.annotation.__name__})
+                # Add endpoints by method
+                for method in methods:
+                    if method in ["GET", "PUT"]:
+                        device_endpoints[device_type][method].append(property_name)
 
-                    # Initialize device entry if not exists
-                    if device_type not in device_endpoints:
-                        device_endpoints[device_type] = {
-                            "GET": [],
-                            "PUT": [],
-                            "info": {},
-                        }
-
-                    # Add endpoints by method
-                    for method in methods:
-                        if method in ["GET", "PUT"]:
-                            device_endpoints[device_type][method].append(property_name)
-
-                    device_endpoints[device_type]["info"][property_name] = (
-                        params if (len(params) > 0) else {"name": "Value", "type": "bool"}
-                    )
+                device_endpoints[device_type]["info"][property_name] = (
+                    params if (len(params) > 0) else {"name": "Value", "type": "bool"}
+                )
 
     return device_endpoints
 
