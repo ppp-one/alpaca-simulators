@@ -1,4 +1,6 @@
 import asyncio
+import logging
+from collections import OrderedDict
 from datetime import datetime, timezone
 
 import cabaret
@@ -23,11 +25,27 @@ from alpaca_simulators.state import (
     get_device_state,
     get_server_transaction_id,
     update_device_state,
+    update_device_state_if,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-image_cache = {}
+# Bounded LRU cache of generated frames. Each entry holds a full image, and the
+# cache key includes the pointing and the tracking rates, so a tracking
+# telescope produces a new key on nearly every exposure. An unbounded dict here
+# grows until the process runs out of memory.
+image_cache: OrderedDict = OrderedDict()
+
+
+def _cache_image(key: str, image_data) -> None:
+    """Store an image, dropping the least recently used entry when full."""
+    max_entries = Config().load().get("image_cache_entries", 8)
+    image_cache[key] = image_data
+    image_cache.move_to_end(key)
+    while len(image_cache) > max(1, int(max_entries)):
+        image_cache.popitem(last=False)
 
 
 def make_cache_key(
@@ -198,11 +216,17 @@ async def exposure_task(device_number: int, duration: float, light: bool):
             biny=cam_state.get("biny", 1),
         )
         if key in image_cache:
-            print(f"Using cached image for key: {key}")
+            logger.info("Using cached image for key: %s", key)
+            image_cache.move_to_end(key)
             image_data = image_cache[key]
         else:
-            print(f"Generating new image for key: {key}")
-            image_data = cabaret_observatory.generate_image(
+            logger.info("Generating new image for key: %s", key)
+            # generate_image is synchronous: it does CPU work and a Gaia TAP
+            # query that can take seconds. Running it directly here would block
+            # the event loop, which stalls every other request for the whole
+            # duration. Hand it to a worker thread instead.
+            image_data = await asyncio.to_thread(
+                cabaret_observatory.generate_image,
                 ra=(ra / 24) * 360,
                 dec=dec,
                 exp_time=duration,
@@ -212,7 +236,7 @@ async def exposure_task(device_number: int, duration: float, light: bool):
                 tracking_dec_rate=tracking_dec_rate,
                 tap_source=Config().load().get("tap_source", None),
             )
-            image_cache[key] = image_data
+            _cache_image(key, image_data)
 
         # Update to download state with image ready
         update_device_state(
@@ -237,7 +261,12 @@ async def exposure_task(device_number: int, duration: float, light: bool):
                 "image_data": None,
             },
         )
-        raise AlpacaError(0x40D, f"Issue with camera exposure: {e}")
+        # Do not raise. This runs as a BackgroundTask, so the response for
+        # StartExposure has already been sent. An exception here reaches the
+        # ASGI server, which then drops the client's connection. The client
+        # sees a reset instead of reading the error state. Report it through
+        # the camera state and the log, the way real hardware would.
+        logger.error("Camera %s exposure failed: %s", device_number, e, exc_info=True)
 
 
 # Camera-specific endpoints
@@ -346,11 +375,22 @@ def start_exposure(
             f"Subframe Y out of range: StartY={starty}, NumY={numy}, max={max_binned_y}",
         )
 
+    # Claim the camera before the task is queued. The IDLE check above and this
+    # write must be one atomic step: this endpoint is sync, so it runs in the
+    # thread pool and two concurrent StartExposure calls can both pass the check
+    # and queue two tasks for the same camera.
+    claimed = update_device_state_if(
+        "camera",
+        device_number,
+        "camera_state",
+        CameraStates.IDLE,
+        {"camera_state": CameraStates.WAITING},
+    )
+    if not claimed:
+        raise AlpacaError(0x40C, "Camera is not idle")
+
     # Start exposure task
     background_tasks.add_task(exposure_task, device_number, Duration, Light)
-
-    # Set to waiting state
-    # update_device_state("camera", device_number, {"camera_state": CameraStates.WAITING})
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,

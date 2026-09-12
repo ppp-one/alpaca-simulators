@@ -386,6 +386,33 @@ def update_device_state(device_type: str, device_number: int, new_state: dict[st
         _state[device_type][device_number].update(new_state)
 
 
+def update_device_state_if(
+    device_type: str,
+    device_number: int,
+    field: str,
+    expected: Any,
+    new_state: dict[str, Any],
+) -> bool:
+    """Apply new_state only if field currently equals expected.
+
+    The check and the update happen under one lock hold. Use this instead of a
+    get_device_state() check followed by update_device_state(): sync endpoints
+    run in a thread pool, so two callers can pass the same check before either
+    writes.
+
+    Returns True if the update was applied.
+    """
+    with _state_lock:
+        if device_type not in _state or device_number not in _state[device_type]:
+            _state[device_type][device_number] = _create_default_state(device_type, device_number)
+
+        if _state[device_type][device_number].get(field) != expected:
+            return False
+
+        _state[device_type][device_number].update(new_state)
+        return True
+
+
 def get_device_config(device_type: str, device_number: int) -> dict[str, Any]:
     """Get device configuration from yaml configuration file."""
     return DEVICE_CONFIG.get("devices", {}).get(device_type, {}).get(device_number, {})
