@@ -68,6 +68,19 @@ def make_cache_key(
     )
 
 
+def bad_tracking_rates() -> tuple[float, float]:
+    """Return the simulated bad-tracking drift as coordinate-space rates
+    ``(ra_rate, dec_rate)`` in RA-hours/s and degrees/s, the same units as
+    compute_coordinate_rates(). Both are zero when bad_tracking is off.
+
+    bad_tracking_rate is in arcsec/s and is applied to both axes.
+    """
+    if not Config().load().get("bad_tracking", False):
+        return 0.0, 0.0
+    rate = Config().load().get("bad_tracking_rate", 0.01)  # arcsec/s
+    return rate / 3600.0 / 15.0, rate / 3600.0
+
+
 async def bytes_generator(image_array, numx, numy):
     b = (1).to_bytes(4, "little")  # metaversion
     b += (0).to_bytes(4, "little")  # error
@@ -95,6 +108,7 @@ async def exposure_task(device_number: int, duration: float, light: bool):
         # reflect the moment the exposure started, not the moment the image is
         # generated (by which time MoveAxis may have been stopped or changed).
         tel_state_at_open = get_device_state("telescope", 0)
+        open_time = datetime.now(timezone.utc).timestamp()
 
         # Update camera state to exposing
         update_device_state(
@@ -138,6 +152,17 @@ async def exposure_task(device_number: int, duration: float, light: bool):
         pointing_error_dec = Config().load().get("pointing_error_dec", 0.0)  # arcmin
         ra = tel_state_at_open.get("rightascension", 0.0) + (pointing_error_ra / 60) / 15
         dec = tel_state_at_open.get("declination", 0.0) + (pointing_error_dec / 60)
+
+        # Bad tracking: the pointing drifts away from the last slew or sync.
+        # Shift the frame by the drift so far at shutter open. The drift during
+        # the exposure is added to the trail rates below.
+        drift_ra_rate, drift_dec_rate = bad_tracking_rates()
+        last_slew_time = tel_state_at_open.get("last_slew_time")
+        if last_slew_time is not None:
+            time_elapsed = max(0.0, open_time - last_slew_time)
+            ra += time_elapsed * drift_ra_rate
+            dec += time_elapsed * drift_dec_rate
+
         # gaia breaks
         if dec >= 90.0 or dec <= -90.0:
             dec = 89.99 if dec >= 0 else -89.99
@@ -181,19 +206,12 @@ async def exposure_task(device_number: int, duration: float, light: bool):
             camera=cabaret_camera, site=cabaret_site, telescope=cabaret_telescope
         )
 
-        bad_tracking = Config().load().get("bad_tracking", False)
-        if bad_tracking:
-            bad_tracking_rate = Config().load().get("bad_tracking_rate", 0.01)  # arcsec per second
-            last_slew_time = tel_state_at_open.get("last_slew_time", datetime.now(timezone.utc))
-            # drift RA/Dec based on time since last slew
-            time_elapsed = (datetime.now(timezone.utc) - last_slew_time).total_seconds()
-            ra += time_elapsed * (bad_tracking_rate / 3600) / 15  # convert to hours
-            dec += time_elapsed * bad_tracking_rate / 3600
-
         # On-sky rates for cabaret's star trails. cabaret's add_stars() wants arcsec/s,
         # with RA as dα·cos(δ)/dt. compute_coordinate_rates() (telescope.py) gives the
         # coordinate-space rates from the shutter-open snapshot; convert to on-sky here.
         ra_rate_h, dec_rate_deg = compute_coordinate_rates(tel_state_at_open)
+        ra_rate_h += drift_ra_rate
+        dec_rate_deg += drift_dec_rate
 
         # Coordinate-space rates → on-sky arcsec/s (RA: RA-hours/s ×54000 ×cos δ).
         cos_dec = np.cos(np.radians(dec))
