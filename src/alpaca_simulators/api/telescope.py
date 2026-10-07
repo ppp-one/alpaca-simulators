@@ -216,6 +216,7 @@ def _advance_telescope_motion(device_number: int) -> None:
             updates["slewing"] = False
             updates["slew_target_alt"] = None
             updates["slew_target_az"] = None
+            updates["last_slew_time"] = now
         update_device_state("telescope", device_number, updates)
         return
 
@@ -258,6 +259,7 @@ def _advance_telescope_motion(device_number: int) -> None:
             updates["slewing"] = False
             updates["slew_target_ra"] = None
             updates["slew_target_dec"] = None
+            updates["last_slew_time"] = now
         update_device_state("telescope", device_number, updates)
         return
 
@@ -1201,6 +1203,7 @@ def abortslew(device_number: int = Path(..., ge=0), ClientTransactionID: int = F
             "slew_target_dec": None,
             "slew_target_alt": None,
             "slew_target_az": None,
+            "last_slew_time": datetime.now(timezone.utc).timestamp(),
         },
     )
 
@@ -1518,6 +1521,7 @@ def slewtoaltaz(
             "rightascension": ra,
             "declination": dec,
             "last_motion_update": now,
+            "last_slew_time": now,
             "slewing": False,
             "atpark": False,
         },
@@ -1595,6 +1599,7 @@ def slewtocoordinates(
             "targetdeclination": Declination,
             "slewing": False,  # Simplified - immediate slew
             "atpark": False,
+            "last_slew_time": datetime.now(timezone.utc).timestamp(),
         },
     )
 
@@ -1665,6 +1670,7 @@ def slewtotarget(device_number: int = Path(..., ge=0), ClientTransactionID: int 
             "declination": target_dec,
             "slewing": False,  # Simplified - immediate slew
             "atpark": False,
+            "last_slew_time": datetime.now(timezone.utc).timestamp(),
         },
     )
 
@@ -1725,7 +1731,15 @@ def synctoaltaz(
     if Azimuth < 0.0 or Azimuth > 360.0:
         raise AlpacaError(0x401, "Azimuth must be between 0 and 360 degrees")
 
-    update_device_state("telescope", device_number, {"azimuth": Azimuth, "altitude": Altitude})
+    update_device_state(
+        "telescope",
+        device_number,
+        {
+            "azimuth": Azimuth,
+            "altitude": Altitude,
+            "last_slew_time": datetime.now(timezone.utc).timestamp(),
+        },
+    )
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -1759,6 +1773,7 @@ def synctocoordinates(
             "declination": Declination,
             "targetrightascension": RightAscension,
             "targetdeclination": Declination,
+            "last_slew_time": datetime.now(timezone.utc).timestamp(),
         },
     )
 
@@ -1784,7 +1799,11 @@ def synctotarget(device_number: int = Path(..., ge=0), ClientTransactionID: int 
     update_device_state(
         "telescope",
         device_number,
-        {"rightascension": target_ra, "declination": target_dec},
+        {
+            "rightascension": target_ra,
+            "declination": target_dec,
+            "last_slew_time": datetime.now(timezone.utc).timestamp(),
+        },
     )
 
     return AlpacaResponse(
