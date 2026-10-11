@@ -20,6 +20,7 @@ devices:
       ccdtemperature: -20.0
       setccdtemperature: -20.0
       cooleron: false
+      cooling_time: 0.0  # seconds the sensor needs to reach the set point. 0 = instant
       coolerpower: 0.0
       electronsperadu: 1
       exposuremax: 3600.0
@@ -37,6 +38,7 @@ devices:
       percentcompleted: 0
       pixelsizex: 10
       pixelsizey: 10
+      rotation: 0.0  # sensor rotation on the sky, in degrees
       readoutmode: 0
       readoutmodes: ["Fast", "Normal", "High Quality"]
       sensorname: "Simulator Sensor"
