@@ -66,6 +66,7 @@ On first run, the simulator generates `src/alpaca_simulators/config/config.yaml`
 - Initial property values
 - Capabilities and limits
 - Available options (e.g., filter names, camera properties)
+- `cooling_time` (under `devices.camera`): seconds the camera sensor needs to cool to its set point. The default is `0`, which sets the temperature at once.
 
 
 ### Example API Calls

@@ -1,7 +1,10 @@
 import asyncio
 import logging
+import math
+import threading
 from collections import OrderedDict
 from datetime import datetime, timezone
+from time import monotonic
 
 import cabaret
 import numpy as np
@@ -61,11 +64,115 @@ def make_cache_key(
     numy,
     binx,
     biny,
+    ccdtemperature=None,
+    rotation=None,
 ):
-    return (
+    key = (
         f"{ra}_{dec}_{duration}_{light}_{focus}_{sunlight}_"
         f"{tracking_ra_rate}_{tracking_dec_rate}_{numx}x{numy}_b{binx}x{biny}"
     )
+    # The dark current depends on the sensor temperature. While the sensor
+    # cools, two frames of the same field must not share a cache entry.
+    if ccdtemperature is not None:
+        key += f"_t{ccdtemperature:.1f}"
+    if rotation is not None:
+        key += f"_r{rotation}"
+    return key
+
+
+# Sensor cooling. The temperature follows an exponential curve towards the set
+# point. `cooling_time` (camera config, seconds) is the time the curve needs to get
+# within COOLING_TOLERANCE of the set point. When it is 0 (the default), the
+# temperature jumps to the set point at once.
+COOLING_TOLERANCE = 0.1  # deg C
+MIN_COOLER_POWER = 10.0  # percent, the power needed to hold the set point
+
+_cooling_lock = threading.RLock()
+_cooling: dict[int, dict] = {}  # active cooling curve per camera
+
+
+def cooling_time(device_number: int) -> float:
+    state = get_device_state("camera", device_number)
+    return max(0.0, float(state.get("cooling_time", 0.0) or 0.0))
+
+
+def _temperature_on_curve(curve: dict, now: float) -> float:
+    elapsed = now - curve["start_time"]
+    if elapsed >= curve["duration"]:
+        return curve["target"]
+    gap = (curve["start_temp"] - curve["target"]) * math.exp(-elapsed / curve["tau"])
+    return curve["target"] + gap
+
+
+def sync_ccd_temperature(device_number: int) -> float:
+    """Move the stored CCD temperature to where the cooling curve is now.
+
+    The temperature is computed from the elapsed time when it is read, so no
+    background task is needed. Call this before you read ``ccdtemperature``.
+    """
+    with _cooling_lock:
+        state = get_device_state("camera", device_number)
+        temp = state.get("ccdtemperature", 20.0)
+        now = monotonic()
+
+        curve = _cooling.get(device_number)
+        if curve is not None and curve["written"] != state.get("ccdtemperature"):
+            # Something else changed the stored temperature, for example a
+            # state reload. The curve is out of date.
+            del _cooling[device_number]
+            curve = None
+        if curve is not None:
+            temp = _temperature_on_curve(curve, now)
+            if now - curve["start_time"] >= curve["duration"]:
+                del _cooling[device_number]
+                curve = None
+
+        duration = cooling_time(device_number)
+        if curve is None and duration > 0 and state.get("cooleron", False):
+            target = state.get("setccdtemperature", 20.0)
+            gap = abs(temp - target)
+            if gap > COOLING_TOLERANCE:
+                _cooling[device_number] = {
+                    "start_temp": temp,
+                    "target": target,
+                    "start_time": now,
+                    "duration": duration,
+                    "written": temp,
+                    # The gap shrinks to COOLING_TOLERANCE after `duration`.
+                    "tau": duration / math.log(gap / COOLING_TOLERANCE),
+                }
+
+        if temp != state.get("ccdtemperature"):
+            update_device_state("camera", device_number, {"ccdtemperature": temp})
+        if device_number in _cooling:
+            _cooling[device_number]["written"] = temp
+        return temp
+
+
+def restart_cooling(device_number: int) -> None:
+    """Start a new cooling curve from the current temperature.
+
+    Call this before the set point or the cooler state changes.
+    """
+    with _cooling_lock:
+        sync_ccd_temperature(device_number)
+        _cooling.pop(device_number, None)
+
+
+def current_cooler_power(device_number: int) -> float:
+    """Cooler power in percent. It is highest at the start of a cooldown."""
+    if cooling_time(device_number) <= 0:
+        return get_device_state("camera", device_number).get("coolerpower", 0.0)
+    with _cooling_lock:
+        sync_ccd_temperature(device_number)
+        if not get_device_state("camera", device_number).get("cooleron", False):
+            return 0.0
+        curve = _cooling.get(device_number)
+        if curve is None:
+            return MIN_COOLER_POWER
+        gap = abs(_temperature_on_curve(curve, monotonic()) - curve["target"])
+        fraction = gap / abs(curve["start_temp"] - curve["target"])
+        return MIN_COOLER_POWER + (100.0 - MIN_COOLER_POWER) * fraction
 
 
 def bad_tracking_rates() -> tuple[float, float]:
@@ -136,6 +243,7 @@ async def exposure_task(device_number: int, duration: float, light: bool):
         await asyncio.sleep(0.01)  # Simulate readout time
 
         # Generate image using cabaret
+        sync_ccd_temperature(device_number)
         cam_state = get_device_state("camera", device_number)
         tel_state = get_device_state("telescope", 0)  # for hardware properties
         focuser_state = get_device_state("focuser", 0)  # Assume focuser 0
@@ -182,6 +290,7 @@ async def exposure_task(device_number: int, duration: float, light: bool):
             dark_current=0.2
             * 2 ** ((cam_state.get("ccdtemperature", -60) - (-10)) / 6),  # doubles every 6C
             pixel_defects=cam_state.get("pixel_defects", {}),
+            rotation=cam_state.get("rotation", 0.0),
         )
         sunlight = Config().load().get("sunlight", False)
         if sunlight:
@@ -232,6 +341,8 @@ async def exposure_task(device_number: int, duration: float, light: bool):
             numy=cam_state.get("numy"),
             binx=cam_state.get("binx", 1),
             biny=cam_state.get("biny", 1),
+            ccdtemperature=cam_state.get("ccdtemperature"),
+            rotation=cam_state.get("rotation", 0.0),
         )
         if key in image_cache:
             logger.info("Using cached image for key: %s", key)
@@ -896,6 +1007,7 @@ def get_sensortype(device_number: int = Path(..., ge=0), ClientTransactionID: in
 @router.get("/camera/{device_number}/ccdtemperature", response_model=DoubleResponse)
 def get_ccdtemperature(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
+    sync_ccd_temperature(device_number)
     state = get_device_state("camera", device_number)
     return DoubleResponse(
         Value=state.get("ccdtemperature", 20.0),
@@ -939,9 +1051,17 @@ def set_ccdtemperature(
             f"SetCCDTemperature {SetCCDTemperature} out of range (-273.15, 100.0)",
         )
 
-    update_device_state("camera", device_number, {"setccdtemperature": SetCCDTemperature})
-
-    update_device_state("camera", device_number, {"ccdtemperature": SetCCDTemperature})
+    # Hold the lock for all steps. A read between them could start a curve
+    # towards the old set point.
+    with _cooling_lock:
+        # Finish the current cooling curve first, so the new one starts from the
+        # temperature the sensor has now.
+        restart_cooling(device_number)
+        update_device_state("camera", device_number, {"setccdtemperature": SetCCDTemperature})
+        if cooling_time(device_number) <= 0:
+            update_device_state("camera", device_number, {"ccdtemperature": SetCCDTemperature})
+        else:
+            sync_ccd_temperature(device_number)
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -976,7 +1096,10 @@ def set_cooleron(
     if not state.get("cansetccdtemperature", True):
         raise AlpacaError(0x401, "Camera does not support temperature control")
 
-    update_device_state("camera", device_number, {"cooleron": CoolerOn})
+    with _cooling_lock:
+        restart_cooling(device_number)
+        update_device_state("camera", device_number, {"cooleron": CoolerOn})
+        sync_ccd_temperature(device_number)
 
     return AlpacaResponse(
         ClientTransactionID=ClientTransactionID,
@@ -987,9 +1110,8 @@ def set_cooleron(
 @router.get("/camera/{device_number}/coolerpower", response_model=DoubleResponse)
 def get_coolerpower(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("camera", device_number)
-    state = get_device_state("camera", device_number)
     return DoubleResponse(
-        Value=state.get("coolerpower", 0.0),
+        Value=current_cooler_power(device_number),
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
@@ -1280,9 +1402,8 @@ def get_heatsinktemperature(
     device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)
 ):
     validate_device("camera", device_number)
-    state = get_device_state("camera", device_number)
     # Simulate heat sink temperature (usually a bit warmer than CCD)
-    ccd_temp = state.get("ccdtemperature", 20.0)
+    ccd_temp = sync_ccd_temperature(device_number)
     return DoubleResponse(
         Value=ccd_temp + 5.0,
         ClientTransactionID=ClientTransactionID,
