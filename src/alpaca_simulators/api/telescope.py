@@ -1,6 +1,6 @@
 import math
 import threading
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from time import sleep
 
 from fastapi import APIRouter, Form, Path, Query
@@ -155,7 +155,7 @@ def compute_coordinate_rates(state: dict) -> tuple[float, float]:
 def _advance_telescope_motion(device_number: int) -> None:
     """Advance stored telescope coordinates based on elapsed wall-clock time."""
     state = get_device_state("telescope", device_number)
-    now = datetime.now(timezone.utc).timestamp()
+    now = datetime.now(UTC).timestamp()
     last_update = state.get("last_motion_update")
 
     if last_update is None:
@@ -613,7 +613,7 @@ def set_declinationrate(
         device_number,
         {
             "declinationrate": DeclinationRate,
-            "last_motion_update": datetime.now(timezone.utc).timestamp(),
+            "last_motion_update": datetime.now(UTC).timestamp(),
         },
     )
 
@@ -803,7 +803,7 @@ def set_rightascensionrate(
         device_number,
         {
             "rightascensionrate": RightAscensionRate,
-            "last_motion_update": datetime.now(timezone.utc).timestamp(),
+            "last_motion_update": datetime.now(UTC).timestamp(),
         },
     )
 
@@ -1159,7 +1159,7 @@ def get_trackingrates(device_number: int = Path(..., ge=0), ClientTransactionID:
 @router.get("/telescope/{device_number}/utcdate", response_model=StringResponse)
 def get_utcdate(device_number: int = Path(..., ge=0), ClientTransactionID: int = Query(0)):
     validate_device("telescope", device_number)
-    utc_now = datetime.now(timezone.utc)
+    utc_now = datetime.now(UTC)
     return StringResponse(
         Value=utc_now.strftime("%Y-%m-%dT%H:%M:%S.%f") + "Z",
         ClientTransactionID=ClientTransactionID,
@@ -1203,7 +1203,7 @@ def abortslew(device_number: int = Path(..., ge=0), ClientTransactionID: int = F
             "slew_target_dec": None,
             "slew_target_alt": None,
             "slew_target_az": None,
-            "last_slew_time": datetime.now(timezone.utc).timestamp(),
+            "last_slew_time": datetime.now(UTC).timestamp(),
         },
     )
 
@@ -1504,7 +1504,7 @@ def slewtoaltaz(
     if Azimuth < 0.0 or Azimuth > 360.0:
         raise AlpacaError(0x401, "Azimuth must be between 0 and 360 degrees")
 
-    now = datetime.now(timezone.utc).timestamp()
+    now = datetime.now(UTC).timestamp()
     ra, dec = _altaz_to_radec(
         Altitude,
         Azimuth,
@@ -1599,7 +1599,7 @@ def slewtocoordinates(
             "targetdeclination": Declination,
             "slewing": False,  # Simplified - immediate slew
             "atpark": False,
-            "last_slew_time": datetime.now(timezone.utc).timestamp(),
+            "last_slew_time": datetime.now(UTC).timestamp(),
         },
     )
 
@@ -1670,7 +1670,7 @@ def slewtotarget(device_number: int = Path(..., ge=0), ClientTransactionID: int 
             "declination": target_dec,
             "slewing": False,  # Simplified - immediate slew
             "atpark": False,
-            "last_slew_time": datetime.now(timezone.utc).timestamp(),
+            "last_slew_time": datetime.now(UTC).timestamp(),
         },
     )
 
@@ -1737,7 +1737,7 @@ def synctoaltaz(
         {
             "azimuth": Azimuth,
             "altitude": Altitude,
-            "last_slew_time": datetime.now(timezone.utc).timestamp(),
+            "last_slew_time": datetime.now(UTC).timestamp(),
         },
     )
 
@@ -1773,7 +1773,7 @@ def synctocoordinates(
             "declination": Declination,
             "targetrightascension": RightAscension,
             "targetdeclination": Declination,
-            "last_slew_time": datetime.now(timezone.utc).timestamp(),
+            "last_slew_time": datetime.now(UTC).timestamp(),
         },
     )
 
@@ -1802,7 +1802,7 @@ def synctotarget(device_number: int = Path(..., ge=0), ClientTransactionID: int 
         {
             "rightascension": target_ra,
             "declination": target_dec,
-            "last_slew_time": datetime.now(timezone.utc).timestamp(),
+            "last_slew_time": datetime.now(UTC).timestamp(),
         },
     )
 

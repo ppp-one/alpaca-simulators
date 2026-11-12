@@ -7,7 +7,7 @@ https://ascom-standards.org/newdocs/focuser.html#Focuser.DeviceState
 and AlpacaDeviceAPI_v1.yaml (DeviceStateResponse).
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 # Operational DeviceState properties per ASCOM Alpaca interface, mapping the
@@ -95,7 +95,7 @@ def local_sidereal_time(longitude: float) -> float:
 
     Simplified calculation - in practice this would use proper astronomy formulas.
     """
-    utc_now = datetime.now(timezone.utc)
+    utc_now = datetime.now(UTC)
     jd = utc_now.timestamp() / 86400.0 + 2440587.5  # Julian day
     gmst = 18.697374558 + 24.06570982441908 * (jd - 2451545.0)  # Greenwich Mean Sidereal Time
 
@@ -128,6 +128,6 @@ def build_device_state(device_type: str, state: dict[str, Any]) -> list[dict[str
         for name, key in DEVICE_STATE_PROPERTIES.get(device_type, {}).items()
         if key in values
     ]
-    items.append({"Name": "TimeStamp", "Value": datetime.now(timezone.utc).isoformat()})
+    items.append({"Name": "TimeStamp", "Value": datetime.now(UTC).isoformat()})
 
     return items

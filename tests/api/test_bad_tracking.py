@@ -1,6 +1,6 @@
 import asyncio
 import math
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import cabaret
 import numpy as np
@@ -58,7 +58,7 @@ def _expose(bad_tracking: bool, seconds_since_slew: float | None) -> dict:
     Config().load().update({"bad_tracking": bad_tracking, "bad_tracking_rate": RATE})
     last_slew_time = None
     if seconds_since_slew is not None:
-        last_slew_time = datetime.now(timezone.utc).timestamp() - seconds_since_slew
+        last_slew_time = datetime.now(UTC).timestamp() - seconds_since_slew
     update_device_state("telescope", 0, {"last_slew_time": last_slew_time})
 
     asyncio.run(camera.exposure_task(0, 0.0, True))
@@ -69,7 +69,7 @@ def _expose(bad_tracking: bool, seconds_since_slew: float | None) -> dict:
 
 class TestBadTracking:
     def test_slew_and_sync_record_last_slew_time(self):
-        before = datetime.now(timezone.utc).timestamp()
+        before = datetime.now(UTC).timestamp()
         update_device_state("telescope", 0, {"atpark": False, "last_slew_time": None})
 
         response = client.put(
