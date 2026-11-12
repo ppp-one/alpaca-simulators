@@ -89,7 +89,7 @@ class TestTelescope:
     def test_get_axisrates_missing_axis_parameter(self):
         """Test that Axis parameter is required"""
         response = client.get(f"{base_api_path}/0/axisrates")
-        assert response.status_code == 422  # FastAPI validation error
+        assert response.status_code == 400  # Alpaca spec: invalid request
 
     def test_get_axisrates_default_client_transaction_id(self, setup_telescope_state):
         """Test that ClientTransactionID defaults to 0 when not provided"""
@@ -115,7 +115,7 @@ class TestTelescope:
         response = client.get(
             f"{base_api_path}/-1/axisrates", params={"Axis": TelescopeAxes.PRIMARY}
         )
-        assert response.status_code == 422  # FastAPI validation error
+        assert response.status_code == 400  # Alpaca spec: invalid request
 
     def test_get_axisates_returns_default_on_missing_state(self):
         """Test that default rates are returned if state is missing"""

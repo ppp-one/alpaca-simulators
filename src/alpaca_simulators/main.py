@@ -3,10 +3,15 @@ import os
 from contextlib import asynccontextmanager
 from importlib.metadata import version
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
+from fastapi.exception_handlers import (
+    http_exception_handler as default_http_exception_handler,
+)
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.templating import Jinja2Templates
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from alpaca_simulators.api import (
     camera,
@@ -85,29 +90,21 @@ async def alpaca_exception_handler(request: Request, exc: AlpacaError):
     )
 
 
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
-    """Handle HTTP exceptions and convert them to Alpaca format when appropriate"""
-    error_response: dict[str, object] = {
-        "error": {
-            "message": exc.detail,
-            "client_transaction_id": _client_transaction_id(request),
-        }
-    }
+# Per the Alpaca spec, requests the device can't interpret get a 400 with a
+# plain-text message.
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if exc.status_code == 404 and request.url.path.startswith(API_PREFIX):
+        return PlainTextResponse(
+            f"Device or method not found: {request.url.path}", status_code=400
+        )
+    return await default_http_exception_handler(request, exc)
 
-    if exc.status_code == 404:
-        error_response["url"] = str(request.url)
-        return JSONResponse(
-            status_code=400,  # Alpaca uses 400 for bad requests
-            content=f"Device or method not found: {error_response}",
-        )
-    elif exc.status_code == 422:
-        return JSONResponse(
-            status_code=400,  # Alpaca uses 400 for bad requests
-            content=f"Invalid parameters: {error_response}",
-        )
-    else:
-        return JSONResponse(status_code=exc.status_code, content=exc.detail)
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    errors = "; ".join(f"{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in exc.errors())
+    return PlainTextResponse(f"Invalid parameters: {errors}", status_code=400)
 
 
 @app.exception_handler(Exception)
