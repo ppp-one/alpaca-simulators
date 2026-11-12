@@ -317,7 +317,7 @@ class CoverCalibratorState(BaseModel):
 
 
 # Global state management
-_state = defaultdict(lambda: defaultdict(dict))
+_state: defaultdict[str, defaultdict[int, dict[str, Any]]] = defaultdict(lambda: defaultdict(dict))
 _server_transaction_id = 0
 _state_lock = threading.Lock()
 

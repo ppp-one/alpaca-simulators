@@ -5,6 +5,7 @@ Analyzes the API routers to determine available endpoints for each device type.
 
 import inspect
 from collections.abc import Iterable
+from typing import Any
 
 from fastapi import APIRouter
 
@@ -29,7 +30,7 @@ def _iter_routes(routers: Iterable[tuple[APIRouter, str]]):
 
 def discover_device_endpoints(
     routers: Iterable[tuple[APIRouter, str]],
-) -> dict[str, dict[str, list[str]]]:
+) -> dict[str, dict[str, Any]]:
     """
     Discover all available endpoints for each device type.
 
@@ -39,7 +40,7 @@ def discover_device_endpoints(
     Returns a dictionary mapping device types to their available GET and PUT
     endpoints.
     """
-    device_endpoints = {}
+    device_endpoints: dict[str, dict[str, Any]] = {}
 
     for path, methods, endpoint_func in _iter_routes(routers):
         # Analyze function signature
@@ -47,7 +48,7 @@ def discover_device_endpoints(
 
         # Parse device-specific endpoints
         device_type = path.split("/")[3] if len(path.split("/")) > 3 else None
-        if f"/{device_type}/" in path and "/{device_number}/" in path:
+        if device_type and f"/{device_type}/" in path and "/{device_number}/" in path:
             # Extract the property name from the path
             # Example: /api/v1/camera/{device_number}/temperature -> temperature
             path_parts = path.split("/")
@@ -86,9 +87,7 @@ def discover_device_endpoints(
     return device_endpoints
 
 
-def get_action_endpoints(
-    device_type: str, endpoints: dict[str, dict[str, list[str]]]
-) -> list[str]:
+def get_action_endpoints(device_type: str, endpoints: dict[str, dict[str, Any]]) -> list[str]:
     """
     Get list of action endpoints (PUT endpoints that don't correspond to properties).
     """

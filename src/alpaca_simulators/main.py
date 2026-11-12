@@ -98,7 +98,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         except (ValueError, TypeError):
             pass
 
-    error_response = {
+    error_response: dict[str, object] = {
         "error": {
             "message": exc.detail,
             "client_transaction_id": client_transaction_id,
@@ -106,7 +106,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     }
 
     if exc.status_code == 404:
-        error_response["url"] = request.url
+        error_response["url"] = str(request.url)
         return JSONResponse(
             status_code=400,  # Alpaca uses 400 for bad requests
             content=f"Device or method not found: {error_response}",
