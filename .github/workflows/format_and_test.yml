@@ -8,27 +8,28 @@ jobs:
   run-test:
     strategy:
       matrix:
-        python-version: [ 3.11 ]
-        os: [ ubuntu-latest ]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+        os: [ubuntu-latest]
       fail-fast: false
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Install uv and set up Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
+      - name: Sync dependencies
+        run: uv sync --locked
 
       - name: Checks with pre-commit
-        uses: pre-commit/action@v3.0.1
+        run: uv run pre-commit run --all-files --show-diff-on-failure
+
+      - name: Type check with mypy
+        run: uv run mypy
 
       - name: Test with pytest
-        run: |
-          python -m pip install ".[test]"
-          python -m pytest tests
+        run: uv run pytest tests
