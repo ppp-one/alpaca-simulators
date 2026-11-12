@@ -1340,7 +1340,7 @@ def moveaxis(
         TelescopeAxes.SECONDARY: "secondary",
         TelescopeAxes.TERTIARY: "tertiary",
     }
-    axis_key = _AXIS_KEY[Axis]
+    axis_key = _AXIS_KEY[TelescopeAxes(Axis)]
     rate_key = f"moveaxis_{axis_key}_rate"
     saved_tracking_key = f"moveaxis_{axis_key}_saved_tracking"
 

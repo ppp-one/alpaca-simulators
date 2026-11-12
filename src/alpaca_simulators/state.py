@@ -1,6 +1,7 @@
 import os
 import threading
 from collections import defaultdict
+from enum import IntEnum
 from typing import Any
 
 from pydantic import BaseModel
@@ -87,7 +88,7 @@ class RateArrayResponse(AlpacaResponse):
 
 
 # ASCOM Enums
-class CameraStates:
+class CameraStates(IntEnum):
     IDLE = 0
     WAITING = 1
     EXPOSING = 2
@@ -96,7 +97,7 @@ class CameraStates:
     ERROR = 5
 
 
-class SensorTypes:
+class SensorTypes(IntEnum):
     MONOCHROME = 0
     COLOR = 1
     RGGB = 2
@@ -105,20 +106,20 @@ class SensorTypes:
     LRGB = 5
 
 
-class PierSide:
+class PierSide(IntEnum):
     UNKNOWN = -1
     EAST = 0
     WEST = 1
 
 
-class GuideDirections:
+class GuideDirections(IntEnum):
     NORTH = 0
     SOUTH = 1
     EAST = 2
     WEST = 3
 
 
-class ShutterState:
+class ShutterState(IntEnum):
     OPEN = 0
     CLOSED = 1
     OPENING = 2
@@ -126,7 +127,7 @@ class ShutterState:
     ERROR = 4
 
 
-class CoverStatus:
+class CoverStatus(IntEnum):
     NOT_PRESENT = 0
     CLOSED = 1
     MOVING = 2
@@ -135,7 +136,7 @@ class CoverStatus:
     ERROR = 5
 
 
-class CalibratorStatus:
+class CalibratorStatus(IntEnum):
     NOT_PRESENT = 0
     OFF = 1
     NOT_READY = 2
@@ -144,13 +145,13 @@ class CalibratorStatus:
     ERROR = 5
 
 
-class AlignmentModes:
+class AlignmentModes(IntEnum):
     ALT_AZ = 0
     POLAR = 1
     GERMAN_POLAR = 2
 
 
-class EquatorialCoordinateType:
+class EquatorialCoordinateType(IntEnum):
     OTHER = 0
     TOPOCENTRIC = 1
     J2000 = 2
@@ -158,14 +159,14 @@ class EquatorialCoordinateType:
     B1950 = 4
 
 
-class DriveRates:
+class DriveRates(IntEnum):
     SIDEREAL = 0
     LUNAR = 1
     SOLAR = 2
     KING = 3
 
 
-class TelescopeAxes:
+class TelescopeAxes(IntEnum):
     PRIMARY = 0
     SECONDARY = 1
     TERTIARY = 2
