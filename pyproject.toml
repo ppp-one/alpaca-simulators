@@ -52,8 +52,5 @@ fixable = ["ALL"]
 select = ["E", "F", "I001", "UP"]
 
 [tool.uv.build-backend]
-data = [
-  "src/alpaca_simulators/config/"
-]
 module-name = "alpaca_simulators"
-source-include = ["src/alpaca_simulators/config/default.yaml"]
+source-exclude = ["src/alpaca_simulators/config/config.yaml"]
