@@ -1,10 +1,17 @@
+import logging
 import os
 from contextlib import asynccontextmanager
+from importlib.metadata import version
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
+from fastapi.exception_handlers import (
+    http_exception_handler as default_http_exception_handler,
+)
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.templating import Jinja2Templates
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from alpaca_simulators.api import (
     camera,
@@ -45,7 +52,7 @@ app = FastAPI(
     description=(
         "A simulator for Alpaca devices based on the AlpacaDeviceAPI_v1.yaml specification."
     ),
-    version="1.0.0",
+    version=version("alpaca-simulators"),
 )
 
 # Add CORS middleware
@@ -61,82 +68,54 @@ app.add_middleware(
 templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
 
 
+def _client_transaction_id(request: Request) -> int:
+    # Only query params: the body may already have been consumed by FastAPI's
+    # form parsing, so endpoints handle a ClientTransactionID sent in the body.
+    try:
+        return int(request.query_params.get("ClientTransactionID", 0))
+    except ValueError:
+        return 0
+
+
 @app.exception_handler(AlpacaError)
 async def alpaca_exception_handler(request: Request, exc: AlpacaError):
-    client_transaction_id = 0
-
-    # Try to get ClientTransactionID from query params
-    if "ClientTransactionID" in request.query_params:
-        try:
-            client_transaction_id = int(request.query_params["ClientTransactionID"])
-        except (ValueError, TypeError):
-            pass
-
-    # Note: We don't try to read the request body here as it may have been
-    # consumed by FastAPI's form parsing. The ClientTransactionID should be
-    # handled by the endpoint itself if it's in the body.
-
     return JSONResponse(
         status_code=200,  # Per Alpaca spec, most errors return HTTP 200
         content={
             "ErrorNumber": exc.code,
             "ErrorMessage": exc.message,
-            "ClientTransactionID": client_transaction_id,
+            "ClientTransactionID": _client_transaction_id(request),
             "ServerTransactionID": get_server_transaction_id(),
         },
     )
 
 
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
-    """Handle HTTP exceptions and convert them to Alpaca format when appropriate"""
-    client_transaction_id = 0
-
-    if "ClientTransactionID" in request.query_params:
-        try:
-            client_transaction_id = int(request.query_params["ClientTransactionID"])
-        except (ValueError, TypeError):
-            pass
-
-    error_response = {
-        "error": {
-            "message": exc.detail,
-            "client_transaction_id": client_transaction_id,
-        }
-    }
-
-    if exc.status_code == 404:
-        error_response["url"] = request.url
-        return JSONResponse(
-            status_code=400,  # Alpaca uses 400 for bad requests
-            content=f"Device or method not found: {error_response}",
+# Per the Alpaca spec, requests the device can't interpret get a 400 with a
+# plain-text message.
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if exc.status_code == 404 and request.url.path.startswith(API_PREFIX):
+        return PlainTextResponse(
+            f"Device or method not found: {request.url.path}", status_code=400
         )
-    elif exc.status_code == 422:
-        return JSONResponse(
-            status_code=400,  # Alpaca uses 400 for bad requests
-            content=f"Invalid parameters: {error_response}",
-        )
-    else:
-        return JSONResponse(status_code=exc.status_code, content=exc.detail)
+    return await default_http_exception_handler(request, exc)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    errors = "; ".join(f"{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in exc.errors())
+    return PlainTextResponse(f"Invalid parameters: {errors}", status_code=400)
 
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
     """Handle unexpected exceptions"""
-    client_transaction_id = 0
-
-    if "ClientTransactionID" in request.query_params:
-        try:
-            client_transaction_id = int(request.query_params["ClientTransactionID"])
-        except (ValueError, TypeError):
-            pass
-
     return JSONResponse(
         status_code=500,
         content={
             "ErrorNumber": 0x500,
             "ErrorMessage": f"Internal server error: {str(exc)}",
-            "ClientTransactionID": client_transaction_id,
+            "ClientTransactionID": _client_transaction_id(request),
             "ServerTransactionID": get_server_transaction_id(),
         },
     )
@@ -206,9 +185,8 @@ async def reload_config_state():
 @app.put("/sunlight")
 async def enable_sunlight(state: bool):
     """Enable or disable sunlight simulation"""
-    print(Config().load().get("sunlight"))
     Config().load().update({"sunlight": state})
-    print(Config().load().get("sunlight"))
+    logging.info(f"sunlight simulation set to {state}")
 
     return {"message": f"Sunlight simulation {'enabled' if state else 'disabled'}"}
 
@@ -223,9 +201,8 @@ async def get_sunlight():
 @app.put("/bad_tracking")
 async def enable_bad_tracking(state: bool):
     """Enable or disable bad_tracking simulation"""
-    print(Config().load().get("bad_tracking"))
     Config().load().update({"bad_tracking": state})
-    print(Config().load().get("bad_tracking"))
+    logging.info(f"bad_tracking simulation set to {state}")
 
     return {"message": f"bad_tracking simulation {'enabled' if state else 'disabled'}"}
 

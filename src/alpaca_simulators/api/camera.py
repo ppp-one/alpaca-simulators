@@ -3,7 +3,7 @@ import logging
 import math
 import threading
 from collections import OrderedDict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from time import monotonic
 
 import cabaret
@@ -215,7 +215,7 @@ async def exposure_task(device_number: int, duration: float, light: bool):
         # reflect the moment the exposure started, not the moment the image is
         # generated (by which time MoveAxis may have been stopped or changed).
         tel_state_at_open = get_device_state("telescope", 0)
-        open_time = datetime.now(timezone.utc).timestamp()
+        open_time = datetime.now(UTC).timestamp()
 
         # Update camera state to exposing
         update_device_state(
@@ -224,7 +224,7 @@ async def exposure_task(device_number: int, duration: float, light: bool):
             {
                 "camera_state": CameraStates.EXPOSING,
                 "image_ready": False,
-                "exposure_start_time": datetime.now(timezone.utc).isoformat(),
+                "exposure_start_time": datetime.now(UTC).isoformat(),
                 "exposure_duration": duration,
                 "light": light,
                 "percentcompleted": 0,

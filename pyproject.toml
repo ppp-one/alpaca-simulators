@@ -7,7 +7,8 @@ dev = [
   "ruff",
   "pre-commit",
   "pytest",
-  "httpx"
+  "httpx",
+  "mypy"
 ]
 
 [project]
@@ -28,11 +29,8 @@ keywords = ["astronomy", "astrophysics", "telescope"]
 license = "MIT"
 name = "alpaca-simulators"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 version = "1.3.2"
-
-[project.optional-dependencies]
-test = ["pytest", "httpx"]
 
 [project.scripts]
 alpaca-simulators = "alpaca_simulators.run_simulator:main"
@@ -41,6 +39,10 @@ alpaca-simulators = "alpaca_simulators.run_simulator:main"
 "Bug Tracker" = "https://github.com/ppp-one/alpaca-simulators/issues"
 Homepage = "https://github.com/ppp-one/alpaca-simulators"
 Source = "https://github.com/ppp-one/alpaca-simulators"
+
+[tool.mypy]
+files = ["src", "tests"]
+ignore_missing_imports = true
 
 [tool.ruff]
 exclude = ["uv.lock", "*.yaml"]
@@ -52,8 +54,5 @@ fixable = ["ALL"]
 select = ["E", "F", "I001", "UP"]
 
 [tool.uv.build-backend]
-data = [
-  "src/alpaca_simulators/config/"
-]
 module-name = "alpaca_simulators"
-source-include = ["src/alpaca_simulators/config/default.yaml"]
+source-exclude = ["src/alpaca_simulators/config/config.yaml"]

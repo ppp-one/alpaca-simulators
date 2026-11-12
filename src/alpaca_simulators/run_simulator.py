@@ -4,8 +4,6 @@ import os
 
 import uvicorn
 
-logging.basicConfig(level=logging.INFO)
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the FastAPI application with Uvicorn.")
@@ -39,6 +37,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
     args = parse_args()
 
     logging.info(

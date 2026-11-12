@@ -9,6 +9,7 @@ from alpaca_simulators.devicestate import build_device_state
 from alpaca_simulators.state import (
     AlpacaResponse,
     BoolResponse,
+    DeviceStateItem,
     DeviceStateResponse,
     IntResponse,
     StringArrayResponse,
@@ -349,7 +350,7 @@ def get_devicestate(
     validate_device(device_type, device_number)
     state = get_device_state(device_type, device_number)
     return DeviceStateResponse(
-        Value=build_device_state(device_type, state),
+        Value=[DeviceStateItem(**item) for item in build_device_state(device_type, state)],
         ClientTransactionID=ClientTransactionID,
         ServerTransactionID=get_server_transaction_id(),
     )
